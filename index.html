@@ -18,7 +18,7 @@ h1{font-size:29px;letter-spacing:-.04em;margin:0 0 7px;font-weight:700}
 .summary{margin:22px 0 18px;padding:19px 20px;background:#202124;color:white;border-radius:19px}
 .summary-label{font-size:12px;color:#bfc1c5;margin-bottom:9px}
 .summary-main{font-size:23px;font-weight:650;letter-spacing:-.03em}
-.summary-detail{font-size:12px;color:#c5c6ca;margin-top:7px}
+.summary-detail{font-size:12px;color:#c5c6ca;margin-top:7px;line-height:1.7}.summary-main{white-space:pre-line;text-transform:uppercase;line-height:1.35}.next-panel{margin:0 0 22px;padding:16px 18px;background:#fff;border:1px solid var(--line);border-radius:16px}.next-label{font-size:11px;letter-spacing:.1em;font-weight:700;color:var(--muted)}.next-name{font-size:17px;font-weight:700;margin-top:7px;text-transform:uppercase}.next-time{font-size:13px;color:#666;margin-top:5px;font-variant-numeric:tabular-nums}
 .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:25px 0 13px}
 .toolbar h2{font-size:16px;margin:0}
 .date-select{border:1px solid var(--line);background:white;border-radius:11px;padding:9px 11px;font:inherit;font-size:13px;color:var(--ink);max-width:58%}
@@ -53,6 +53,7 @@ button{border:0;background:transparent;color:var(--blue);font:inherit;font-size:
 <div class="summary-main" id="summary-main">データを待っています</div>
 <div class="summary-detail" id="summary-detail">河合塾のページからショートカットでデータを取り込んでください。</div>
 </section>
+<section class="next-panel" id="next-panel"><div class="next-label">NEXT AVAILABLE</div><div class="next-name" id="next-name">—</div><div class="next-time" id="next-time">次の利用予定はありません</div></section>
 <div class="toolbar"><h2>教室一覧</h2><select class="date-select" id="date-select" aria-label="日付"></select></div>
 <p class="count" id="count"></p>
 <section class="room-list" id="room-list"><div class="empty">まだデータがありません。<br>河合塾の自習室ページでショートカットを実行してください。</div></section>
@@ -93,19 +94,29 @@ function render(){
  const current=dataset.rooms.filter(r=>r.date===selected);
  const now=nowMinutes();
  const isToday=parseDate(selected)===todayKey();
- const active=isToday?current.filter(r=>{const t=hm(r.time);return t&&now>=t.start&&now<t.end}):[];
- const upcoming=isToday?current.filter(r=>{const t=hm(r.time);return t&&t.start>now}).sort((a,b)=>hm(a.time).start-hm(b.time).start):[];
- $("today-label").textContent=isToday?"現在の状況":selected;
- $("summary-main").textContent=isToday?(active.length?`${active.length}教室が利用可能`:upcoming.length?"現在利用できる教室はありません":"本日の利用時間は終了"):`${current.length}件の予定`;
- $("summary-detail").textContent=isToday?(active.length?`利用中：${active.map(r=>r.room).join("、")}`:upcoming.length?`次の開始：${upcoming[0].room}　${upcoming[0].time}`:"時間割を確認してください"):"日付を選択して教室と利用時間を確認できます。";
- $("count").textContent=`${selected} ／ ${current.length}件`;
+ const timed=current.map(r=>({...r,_time:hm(r.time)})).filter(r=>r._time);
+ const active=isToday?timed.filter(r=>now>=r._time.start&&now<r._time.end):[];
+ const upcoming=isToday?timed.filter(r=>r._time.start>now).sort((a,b)=>a._time.start-b._time.start):[];
+ const remaining=isToday?timed.filter(r=>now<r._time.end):timed;
+ $("today-label").textContent=isToday?"AVAILABLE NOW":selected;
+ $("summary-main").textContent=isToday?(active.length?active.map(r=>r.room.toUpperCase()).join("\n") :"NO ROOM AVAILABLE"):`${current.length} ROOMS SCHEDULED`;
+ $("summary-detail").textContent=isToday?(active.length?`${active.length}室 利用可能`:(upcoming.length?"次の利用開始を下に表示しています":"本日の利用時間は終了しました")):"選択した日付の自習室予定";
+ const nextPanel=$("next-panel");
+ if(isToday&&upcoming.length){
+  nextPanel.style.display="block";
+  $("next-name").textContent=upcoming[0].room.toUpperCase();
+  $("next-time").textContent=`${upcoming[0].time} から利用可能`;
+ }else{
+  nextPanel.style.display=isToday?"block":"none";
+  $("next-name").textContent=isToday?"NO UPCOMING ROOM":"—";
+  $("next-time").textContent=isToday?"次の利用予定はありません":"";
+ }
+ $("count").textContent=isToday?`本日の残り ${remaining.length}件`:`${selected} ／ ${current.length}件`;
  const list=$("room-list");list.innerHTML="";
- if(!current.length){list.innerHTML='<div class="empty">この日の自習室情報はありません。</div>';return}
- current.forEach(r=>{
-  const t=hm(r.time);let status="";
-  if(isToday&&t&&now>=t.start&&now<t.end)status='<span class="status open">利用可能</span>';
-  else if(isToday&&t&&t.start>now)status='<span class="status next">開始前</span>';
-  else if(isToday&&t&&now>=t.end)status='<span class="status">終了</span>';
+ if(!remaining.length){list.innerHTML='<div class="empty">現在利用できる自習室・今後の利用予定はありません。</div>'}
+ else remaining.forEach(r=>{
+  const t=r._time;const isActive=isToday&&now>=t.start&&now<t.end;
+  const status=isActive?'<span class="status open">利用可能</span>':(isToday?'<span class="status next">開始前</span>':'');
   const el=document.createElement("article");el.className="room";
   const left=document.createElement("div");left.innerHTML=`<div class="room-name"></div><div class="room-note"></div>`;
   left.querySelector(".room-name").textContent=r.room;
@@ -142,6 +153,7 @@ $("load-json").addEventListener("click",()=>{
 if(!fromHash()){
  try{const saved=localStorage.getItem("studyRoomsData");if(saved)loadData(JSON.parse(saved))}catch(e){}
 }
+setInterval(render,30000);
 </script>
 </body>
 </html>
