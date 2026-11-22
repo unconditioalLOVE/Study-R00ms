@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7">
+<title>Study Rooms</title>
+<style>
+:root{color-scheme:light;--bg:#f5f5f7;--card:#fff;--ink:#202124;--muted:#85878c;--line:#e8e8eb;--green:#16845b;--green-bg:#e9f6ef;--blue:#3868bd}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+main{width:min(100%,680px);margin:0 auto;padding:calc(24px + env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+.brand{font-size:13px;font-weight:700;letter-spacing:.12em;color:#777}
+.school{font-size:12px;color:var(--muted)}
+h1{font-size:29px;letter-spacing:-.04em;margin:0 0 7px;font-weight:700}
+.sub{font-size:13px;color:var(--muted);margin:0}
+.summary{margin:22px 0 18px;padding:19px 20px;background:#202124;color:white;border-radius:19px}
+.summary-label{font-size:12px;color:#bfc1c5;margin-bottom:9px}
+.summary-main{font-size:23px;font-weight:650;letter-spacing:-.03em}
+.summary-detail{font-size:12px;color:#c5c6ca;margin-top:7px;line-height:1.7}.summary-main{white-space:pre-line;text-transform:uppercase;line-height:1.35}.next-panel{margin:-8px 0 18px;padding:9px 13px;background:#fff;border:1px solid var(--line);border-radius:12px}.next-label{font-size:9px;letter-spacing:.1em;font-weight:700;color:var(--muted)}.next-name{font-size:12px;font-weight:700;margin-top:3px;text-transform:uppercase}.next-time{font-size:10px;color:#777;margin-top:2px;font-variant-numeric:tabular-nums}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:25px 0 13px}
+.toolbar h2{font-size:16px;margin:0}
+.date-select{border:1px solid var(--line);background:white;border-radius:11px;padding:9px 11px;font:inherit;font-size:13px;color:var(--ink);max-width:58%}
+.count{font-size:12px;color:var(--muted);margin:0 0 12px}
+.room-list{display:grid;gap:10px}
+.room{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 17px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.room-name{font-size:17px;font-weight:650;letter-spacing:-.02em}
+.room-note{font-size:11px;color:var(--muted);margin-top:5px}
+.room-time{text-align:right;white-space:nowrap;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.status{display:inline-block;margin-top:6px;font-size:10px;font-weight:650;padding:4px 8px;border-radius:20px;background:#f0f0f2;color:#777}
+.status.open{background:var(--green-bg);color:var(--green)}
+.status.next{background:#edf2fc;color:var(--blue)}
+.empty{padding:30px 18px;text-align:center;background:white;border:1px solid var(--line);border-radius:16px;color:var(--muted);font-size:13px;line-height:1.8}
+.notice{margin-top:22px;padding:14px 15px;border-radius:13px;background:#eeeeF1;color:#777;font-size:11px;line-height:1.7}
+.footer{display:flex;justify-content:space-between;align-items:center;margin-top:18px;color:var(--muted);font-size:11px}
+button{border:0;background:transparent;color:var(--blue);font:inherit;font-size:12px;padding:8px 0}
+#import{display:none;margin-top:18px;padding:14px;background:white;border:1px solid var(--line);border-radius:14px}
+#import textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:9px;padding:10px;font:12px ui-monospace,monospace}
+#import button{background:#202124;color:white;border-radius:9px;padding:10px 14px;margin-top:8px}
+@media(min-width:600px){main{padding-top:42px}.summary{padding:22px 24px}}
+[hidden]{display:none!important}
+main{position:relative}
+body.locked main{display:none}
+h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);margin-left:9px;font-variant-numeric:tabular-nums;vertical-align:middle}
+.secta{position:absolute;top:calc(8px + env(safe-area-inset-top));right:18px;font-size:9px;letter-spacing:.03em;color:#a3a5aa;text-transform:none;line-height:1}
+.secta a{color:inherit;text-decoration:none;border-bottom:1px solid #d5d6da}
+.tools{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.admin-tag{font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--muted)}
+.credit{margin-top:26px;text-align:center;font-size:9px;letter-spacing:.14em;color:#b2b4b9;text-transform:none}
+#login{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:calc(24px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));overflow:auto}
+.login-card{width:min(100%,380px)}
+.login-card h2{font-size:22px;letter-spacing:-.03em;margin:10px 0 6px}
+.login-card p{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.7}
+.login-card input{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;padding:13px 14px;font:inherit;font-size:16px;margin-bottom:10px;color:var(--ink)}
+#sid{letter-spacing:.3em;font-variant-numeric:tabular-nums}
+.login-card .pri,.adbox .pri{background:#202124;color:#fff;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:650}
+.login-card .pri{width:100%;font-size:14px;padding:13px 14px}
+.login-card .pri[disabled]{opacity:.5}
+.login-card #login-mode{margin-top:6px}
+#login-msg{color:#b3402a!important;min-height:1.7em;margin:10px 0 0!important}
+.adbox{margin-top:14px;padding:14px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.adbox textarea{width:100%;min-height:240px;border:1px solid var(--line);border-radius:9px;padding:10px;font:12px ui-monospace,monospace}
+.adbox .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.adbox .col{display:grid;gap:8px}
+.adbox .tp{border:1px solid var(--line);background:#fafafa;border-radius:10px;padding:11px 12px;color:var(--ink);text-align:left;font-size:13px}
+.adbox .msg{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;white-space:pre-line}
+#test-banner{margin:14px 0 -6px;padding:8px 12px;border-radius:10px;background:#fff4d6;color:#7a5a00;font-size:11px;line-height:1.6}
+</style>
+</head>
+<body class="locked">
+<main>
+<div class="secta">unconditionalLOVE · <a href="https://unconditioallove.github.io/SECTA/" target="_blank" rel="noopener">SECTA</a></div>
+<header><div class="brand">STUDY ROOMS</div><div class="school" id="school">校舎未設定</div></header>
+<section>
+<h1>自習室<span class="clock" id="clock"></span></h1>
+<p class="sub">今日、利用できる教室を確認</p>
+</section>
+<section class="summary">
+<div class="summary-label" id="today-label">本日の状況</div>
+<div class="summary-main" id="summary-main">データを待っています</div>
+<div class="summary-detail" id="summary-detail">河合塾のページからショートカットでデータを取り込んでください。</div>
+</section>
+<section class="next-panel" id="next-panel"><div class="next-label">NEXT AVAILABLE</div><div class="next-name" id="next-name">—</div><div class="next-time" id="next-time">次の利用予定はありません</div></section>
+<div class="toolbar"><h2>教室一覧</h2><select class="date-select" id="date-select" aria-label="日付"></select></div>
+<p class="count" id="count"></p>
+<section class="room-list" id="room-list"><div class="empty">まだデータがありません。<br>河合塾の自習室ページでショートカットを実行してください。</div></section>
+<div class="notice">自習室は変更になる場合があります。利用前に校舎の掲示板で最新情報を確認してください。満席の場合は入室できないことがあります。</div>
+<div class="footer"><span id="updated">最終更新：未取得</span><button id="toggle-import">JSONを手動で読み込む</button></div>
+<section id="import"><textarea id="json-input" placeholder="ショートカットで取得したJSONを貼り付け"></textarea><button id="load-json">読み込む</button></section>
+<div class="tools"><button type="button" id="logout">ログアウト</button></div>
+<div id="admin-slot"></div>
+<div class="credit">DEVELOPED BY unconditionalLOVE</div>
+</main>
+<div id="login" hidden><div class="login-card">
+<div class="brand">STUDY ROOMS</div>
+<h2 id="login-title">学籍番号を入力してください</h2>
+<p>6桁の学籍番号とパスワードでログインします。別の端末でも同じ組み合わせで同じアカウントに入れます。</p>
+<form id="login-form" novalidate>
+<input id="sid" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="username" placeholder="学籍番号（6桁）" aria-label="学籍番号">
+<input id="pw" type="password" autocomplete="current-password" placeholder="パスワード（6文字以上）" aria-label="パスワード">
+<input id="pw2" type="password" autocomplete="new-password" placeholder="パスワード（確認）" aria-label="パスワード確認" hidden>
+<button type="submit" class="pri" id="login-submit">ログイン</button>
+<button type="button" id="login-mode">初めての方は新規登録</button>
+<p id="login-msg" role="alert"></p>
+</form></div></div>
+<script>
+const $ = id => document.getElementById(id);
+let dataset = null;
+const SR=window.SR={shared:null,test:null,legacy:()=>dataset};
+function activeData(){return SR.test?SR.test.data:(SR.shared||dataset)}
+const pad = n => String(n).padStart(2,"0");
+function parseDate(s){
+  const m=s.match(/(\d+)月(\d+)日/);
+  if(!m)return null;
+  const y=new Date().getFullYear();
+  return `${y}-${pad(+m[1])}-${pad(+m[2])}`;
+}
+function dateLabel(s){return s.replace(/[（）]/g," ").replace(/\s+/g," ").trim();}
+function hm(s){
+  const m=s.match(/(\d{1,2}):(\d{2})\s*～\s*(\d{1,2}):(\d{2})/);
+  return m?{start:+m[1]*60 + +m[2],end:+m[3]*60 + +m[4]}:null;
+}
+function nowMinutes(){if(SR.test)return SR.test.now;const d=new Date();return d.getHours()*60+d.getMinutes()}
+function todayKey(){
+ const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function render(){
+ const dataset=activeData();
+ if(!dataset || !Array.isArray(dataset.rooms))return;
+ $("school").textContent=dataset.school||"校舎";
+ const dates=[...new Set(dataset.rooms.map(r=>r.date))];
+ const select=$("date-select");
+ const old=select.value;
+ select.innerHTML="";
+ dates.forEach(d=>{const o=document.createElement("option");o.value=d;o.textContent=dateLabel(d);select.append(o)});
+ const todayDate=dates.find(d=>parseDate(d)===todayKey())||"";
+ let selected=dates.includes(old)?old:(todayDate||dates[0]||"");
+ select.value=selected;
+
+ // AVAILABLE NOW / NEXT AVAILABLE always reflect today's live status,
+ // regardless of which date is selected in the schedule list.
+ const now=nowMinutes();
+ const todayRooms=dataset.rooms.filter(r=>r.date===todayDate).map(r=>({...r,_time:hm(r.time)})).filter(r=>r._time);
+ const active=todayRooms.filter(r=>now>=r._time.start&&now<r._time.end);
+ const upcoming=todayRooms.filter(r=>r._time.start>now).sort((a,b)=>a._time.start-b._time.start);
+ const remainingToday=todayRooms.filter(r=>now<r._time.end);
+ $("today-label").textContent="AVAILABLE NOW";
+ $("summary-main").textContent=active.length?active.map(r=>r.room.toUpperCase()).join("\n"):"NO ROOM AVAILABLE";
+ $("summary-detail").textContent=active.length?active.map(r=>`${r.time}`).join("  /  "):(upcoming.length?"現在利用できる自習室はありません":"本日の利用時間は終了しました");
+ const nextPanel=$("next-panel");
+ if(upcoming.length){
+  nextPanel.style.display="block";
+  $("next-name").textContent=upcoming[0].room.toUpperCase();
+  $("next-time").textContent=`${upcoming[0].time} から利用可能`;
+ }else{
+  nextPanel.style.display="block";
+  $("next-name").textContent="—";
+  $("next-time").textContent="次の利用予定はありません";
+ }
+
+ // The date selector controls only the schedule below, never the live panel.
+ const selectedRooms=dataset.rooms.filter(r=>r.date===selected).map(r=>({...r,_time:hm(r.time)})).filter(r=>r._time);
+ const viewingToday=parseDate(selected)===todayKey();
+ const visibleRooms=viewingToday?selectedRooms.filter(r=>now<r._time.end):selectedRooms;
+ $("count").textContent=selected?dateLabel(selected)+" の予定":"予定はありません";
+ const list=$("room-list");list.innerHTML="";
+ if(!visibleRooms.length){
+  list.innerHTML='<div class="empty">この日の表示できる自習室はありません。</div>';
+ }else visibleRooms.forEach(r=>{
+  const t=r._time;const isActive=viewingToday&&now>=t.start&&now<t.end;
+  const status=isActive?'<span class="status open">利用可能</span>':(viewingToday?'<span class="status next">開始前</span>':'');
+  const el=document.createElement("article");el.className="room";
+  const left=document.createElement("div");left.innerHTML=`<div class="room-name"></div><div class="room-note"></div>`;
+  left.querySelector(".room-name").textContent=r.room;
+  left.querySelector(".room-note").textContent=r.note||"";
+  const right=document.createElement("div");right.className="room-time";
+  right.innerHTML=`<div></div>${status}`;
+  right.querySelector("div").textContent=r.time;
+  el.append(left,right);list.append(el);
+ });
+ $("updated").textContent=dataset.updatedAt?`最終取得：${new Date(dataset.updatedAt).toLocaleString("ja-JP")}`:"最終取得：不明";
+}
+function loadData(obj){
+ if(!obj||!Array.isArray(obj.rooms))throw new Error("rooms配列が見つかりません");
+ dataset=obj;
+ try{localStorage.setItem("studyRoomsData",JSON.stringify(obj))}catch(e){}
+ render();
+}
+function fromHash(){
+ const hash=location.hash;
+ if(!hash.startsWith("#data="))return false;
+ try{
+  const raw=decodeURIComponent(hash.slice(6));
+  loadData(JSON.parse(raw));
+  history.replaceState(null,"",location.pathname+location.search);
+  return true;
+ }catch(e){console.error(e);return false}
+}
+$("date-select").addEventListener("change",render);
+$("toggle-import").addEventListener("click",()=>{$("import").style.display=$("import").style.display==="block"?"none":"block"});
+$("load-json").addEventListener("click",()=>{
+ try{loadData(JSON.parse($("json-input").value));$("import").style.display="none";$("json-input").value=""}
+ catch(e){alert("JSONを読み込めませんでした。内容を確認してください。")}
+});
+if(!fromHash()){
+ try{const saved=localStorage.getItem("studyRoomsData");if(saved)loadData(JSON.parse(saved))}catch(e){}
+}
+setInterval(render,30000);
+let lastMin=-1;
+function tick(){
+ const d=new Date();
+ $("clock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+ const m=d.getHours()*60+d.getMinutes();
+ if(lastMin!==-1&&m!==lastMin)render();
+ lastMin=m;
+}
+tick();setInterval(tick,1000);
+setTimeout(()=>{if(document.body.classList.contains("locked")&&$("login").hidden){$("login").hidden=false;$("login-msg").textContent="サーバーに接続できません。通信状況を確認してください。"}},8000);
+</script>
+<script type="module">
+/* ====== 設定（SETUP.md参照）====== */
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyCKLntPjkhjqRa_x6QIFLHETSr2Lu1VBZ8",
+  authDomain:"study-r00ms.firebaseapp.com",
+  projectId:"study-r00ms",
+  appId:"1:556994412844:web:025b65ace6996d1839ec89"
+};
+const ADMIN_UID=""; // 学籍番号347192で最初に登録したアカウントのUID
+const FB="https://www.gstatic.com/firebasejs/10.14.1/";
+const MAX_JSON=300000;
+
+async function main(){
+ const loginEl=$("login"),msgEl=$("login-msg");
+ const setMsg=t=>{msgEl.textContent=t||""};
+ const showLogin=()=>{document.body.classList.add("locked");loginEl.hidden=false};
+ let mode="login";
+ function setMode(m){
+  mode=m;const reg=m==="register";
+  $("login-title").textContent=reg?"新規登録":"学籍番号を入力してください";
+  $("pw2").hidden=!reg;
+  $("login-submit").textContent=reg?"登録してログイン":"ログイン";
+  $("login-mode").textContent=reg?"ログイン画面に戻る":"初めての方は新規登録";
+  $("pw").autocomplete=reg?"new-password":"current-password";
+  setMsg("");
+ }
+ $("sid").addEventListener("input",e=>{e.target.value=e.target.value.replace(/\D/g,"").slice(0,6)});
+ $("login-mode").addEventListener("click",()=>setMode(mode==="login"?"register":"login"));
+
+ let m;
+ try{
+  if(!FIREBASE_CONFIG.apiKey||FIREBASE_CONFIG.apiKey.startsWith("YOUR_"))throw new Error("config");
+  const [a,u,f]=await Promise.all([import(FB+"firebase-app.js"),import(FB+"firebase-auth.js"),import(FB+"firebase-firestore.js")]);
+  m={...a,...u,...f};
+ }catch(e){
+  showLogin();
+  setMsg(e.message==="config"?"Firebaseの設定が未完了です（SETUP.md参照）":"サーバーに接続できません。通信状況を確認してください。");
+  $("login-submit").disabled=true;return;
+ }
+ const app=m.initializeApp(FIREBASE_CONFIG),auth=m.getAuth(app),db=m.getFirestore(app);
+ const {doc,collection,getDoc,getDocs,onSnapshot,writeBatch,serverTimestamp,query,orderBy,limit}=m;
+ let isAdmin=false,testerOK=false,unsub=null,rendered=false;
+
+ /* ---- 学籍番号 → 擬似メール（学籍番号そのものは保存しない）---- */
+ async function idToEmail(id){
+  const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("study-rooms:"+id));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,40)+"@study-rooms.local";
+ }
+ const authErr=e=>({
+  "auth/invalid-credential":"学籍番号またはパスワードが違います",
+  "auth/wrong-password":"学籍番号またはパスワードが違います",
+  "auth/user-not-found":"学籍番号またはパスワードが違います",
+  "auth/email-already-in-use":"この学籍番号は登録済みです。ログインしてください",
+  "auth/weak-password":"パスワードは6文字以上にしてください",
+  "auth/too-many-requests":"試行回数が多すぎます。しばらくしてからやり直してください",
+  "auth/network-request-failed":"通信できません。接続を確認してください",
+  "auth/operation-not-allowed":"サーバー側でメール/パスワード認証が有効になっていません"
+ })[e&&e.code]||"ログインできませんでした";
+ $("login-form").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  const id=$("sid").value.trim(),pw=$("pw").value,btn=$("login-submit");
+  if(!/^\d{6}$/.test(id))return setMsg("学籍番号は6桁の数字で入力してください");
+  if(pw.length<6)return setMsg("パスワードは6文字以上で入力してください");
+  if(mode==="register"&&pw!==$("pw2").value)return setMsg("確認用パスワードが一致しません");
+  btn.disabled=true;setMsg("");
+  try{
+   const email=await idToEmail(id);
+   if(mode==="register")await m.createUserWithEmailAndPassword(auth,email,pw);
+   else await m.signInWithEmailAndPassword(auth,email,pw);
+   $("pw").value="";$("pw2").value="";$("sid").value="";
+  }catch(e){setMsg(authErr(e))}
+  finally{btn.disabled=false}
+ });
+ $("logout").addEventListener("click",()=>m.signOut(auth));
+
+ /* ---- 表示切替 ---- */
+ function refresh(){
+  if(!activeData()){if(rendered)location.reload();return}
+  rendered=true;render();
+ }
+ function parseShared(snap){
+  if(!snap.exists())return null;
+  try{const o=JSON.parse(snap.data().json);return o&&Array.isArray(o.rooms)?o:null}catch(e){return null}
+ }
+
+ /* ---- テスターモード（管理者のみ・画面内のみ・保存しない）---- */
+ function makeTest(n){
+  const d=new Date(),date=`${d.getMonth()+1}月${d.getDate()}日（${"日月火水木金土"[d.getDay()]}）`;
+  const R=(room,time)=>({date,room,time,note:"テストデータ"});
+  const sets={
+   1:[R("テスト自習室A","09:00～18:00"),R("テスト自習室B","10:00～20:00"),R("テスト自習室C","11:00～21:00")],
+   2:[R("テスト自習室A","09:00～18:00"),R("テスト自習室B","08:00～11:00"),R("テスト自習室C","08:30～10:30")],
+   3:[R("テスト自習室A","08:00～10:00"),R("テスト自習室B","14:00～17:00"),R("テスト自習室C","15:00～18:00")],
+   4:[R("テスト自習室A","08:00～10:00"),R("テスト自習室B","09:00～11:00"),R("テスト自習室C","08:30～11:30")]
+  };
+  return {n,now:12*60,data:{school:"TESTER MODE",rooms:sets[n]}};
+ }
+ function banner(t){
+  let b=$("test-banner");
+  if(!t){if(b)b.remove();return}
+  if(!b){b=document.createElement("div");b.id="test-banner";document.querySelector(".summary").before(b)}
+  b.textContent=`TESTER MODE ／ パターン${t.n} ／ 仮想時刻 12:00 ／ 実データは変更されていません`;
+ }
+ function endTest(quiet){
+  if(!SR.test)return;
+  SR.test=null;banner(null);
+  if(!quiet)refresh();
+ }
+ function applyTest(n){
+  if(!isAdmin||!testerOK)return;
+  SR.test=makeTest(n);banner(SR.test);render();
+ }
+
+ /* ---- 管理者UI（管理者ログイン時のみDOMを生成）---- */
+ const fsErr=e=>e&&e.code==="permission-denied"?"権限がありません（管理者のみ操作できます）":"通信またはサーバーエラーです";
+ const key=r=>`${r.date}|${r.room}|${r.time}`;
+ function validate(text){
+  let o;try{o=JSON.parse(text)}catch(e){return{err:["JSONの構文エラー: "+e.message]}}
+  if(!o||typeof o!=="object"||Array.isArray(o))return{err:["最上位はオブジェクトにしてください"]};
+  if(!Array.isArray(o.rooms))return{err:["rooms配列がありません"]};
+  const err=[];
+  if(o.school!==undefined&&typeof o.school!=="string")err.push("schoolは文字列にしてください");
+  if(o.rooms.length>500)err.push("roomsは500件までです");
+  o.rooms.forEach((r,i)=>{
+   const p=`rooms[${i}]: `;
+   if(!r||typeof r!=="object"||Array.isArray(r)){err.push(p+"オブジェクトではありません");return}
+   if(typeof r.room!=="string"||!r.room.trim())err.push(p+"roomが空です");
+   if(typeof r.date!=="string"||!parseDate(r.date))err.push(p+"dateに「M月D日」を含めてください");
+   const t=typeof r.time==="string"?hm(r.time):null;
+   if(!t)err.push(p+"timeは「HH:MM～HH:MM」形式にしてください");
+   else if(t.start>=t.end)err.push(p+"終了時刻は開始より後にしてください");
+   if(r.note!==undefined&&typeof r.note!=="string")err.push(p+"noteは文字列にしてください");
+  });
+  if(JSON.stringify(o).length>MAX_JSON)err.push("データが大きすぎます");
+  return err.length?{err:err.slice(0,8)}:{ok:o};
+ }
+ function buildAdmin(){
+  $("admin-slot").innerHTML=`
+<div class="tools"><span class="admin-tag">ADMIN</span><button type="button" id="ad-edit">JSON編集</button><button type="button" id="ad-test">TESTER MODE</button></div>
+<section class="adbox" id="ad-editor" hidden>
+<textarea id="ad-json" spellcheck="false"></textarea>
+<div class="row"><button type="button" class="pri" id="ad-save">検証して保存</button><button type="button" id="ad-check">検証のみ</button><button type="button" id="ad-reload">現在のデータを読込</button></div>
+<div class="row"><select class="date-select" id="ad-bk"><option value="">バックアップを選択</option></select><button type="button" id="ad-bk-list">一覧更新</button><button type="button" id="ad-bk-use">編集欄へ読込</button></div>
+<div class="row"><button type="button" id="ad-unshare">共有を解除（従来の表示に戻す）</button></div>
+<div class="msg" id="ad-msg"></div>
+</section>
+<section class="adbox" id="ad-tester" hidden>
+<div class="col"><button type="button" class="tp" data-p="1">1. 3室が利用可能</button><button type="button" class="tp" data-p="2">2. 1室のみ利用可能</button><button type="button" class="tp" data-p="3">3. 利用可能なし・次の利用予定あり</button><button type="button" class="tp" data-p="4">4. 本日利用可能なし・次の利用予定なし</button></div>
+<div class="row"><button type="button" class="pri" id="ad-real">実データに戻す</button></div>
+<div class="msg" id="ad-tmsg"></div>
+</section>`;
+  const msg=t=>{$("ad-msg").textContent=t||""};
+  const real=()=>SR.shared||SR.legacy();
+  const load=()=>{$("ad-json").value=JSON.stringify(real()||{school:"",rooms:[]},null,2)};
+  const bk=new Map();
+  $("ad-edit").onclick=()=>{const e=$("ad-editor");e.hidden=!e.hidden;if(!e.hidden){load();msg("");loadBackups()}};
+  $("ad-reload").onclick=()=>{load();msg("現在のデータを読み込みました")};
+  $("ad-check").onclick=()=>{const r=validate($("ad-json").value);msg(r.err?"エラー:\n"+r.err.join("\n"):"検証OK（rooms "+r.ok.rooms.length+"件）")};
+  async function loadBackups(){
+   try{
+    const s=await getDocs(query(collection(db,"backups"),orderBy("savedAt","desc"),limit(15)));
+    const sel=$("ad-bk");sel.innerHTML='<option value="">バックアップを選択</option>';bk.clear();
+    s.forEach(d=>{
+     const x=d.data();bk.set(d.id,x.json);let n="?";try{n=JSON.parse(x.json).rooms.length}catch(e){}
+     const o=document.createElement("option");o.value=d.id;
+     o.textContent=`${x.savedAt&&x.savedAt.toDate?x.savedAt.toDate().toLocaleString("ja-JP"):"保存中"}（${n}件）`;sel.append(o);
+    });
+   }catch(e){msg(fsErr(e))}
+  }
+  $("ad-bk-list").onclick=loadBackups;
+  $("ad-bk-use").onclick=()=>{
+   const j=bk.get($("ad-bk").value);if(!j)return msg("バックアップを選択してください");
+   try{$("ad-json").value=JSON.stringify(JSON.parse(j),null,2);msg("読み込みました。内容を確認して「検証して保存」で復元します。")}catch(e){msg("このバックアップは読み込めません")}
+  };
+  $("ad-save").onclick=async()=>{
+   const r=validate($("ad-json").value);
+   if(r.err)return msg("保存できません:\n"+r.err.join("\n"));
+   const prev=real(),next=r.ok,a=new Set((prev&&prev.rooms||[]).map(key));
+   let add=0,del=0;const b=new Set(next.rooms.map(key));
+   b.forEach(k=>{if(!a.has(k))add++});a.forEach(k=>{if(!b.has(k))del++});
+   if(!confirm(`現在 ${prev?prev.rooms.length:0}件 → 保存後 ${next.rooms.length}件\n追加 ${add}件 ／ 削除 ${del}件\n\n全ユーザーに共有されます。保存しますか？`))return;
+   try{
+    const w=writeBatch(db);
+    if(prev)w.set(doc(collection(db,"backups")),{json:JSON.stringify(prev),savedAt:serverTimestamp(),by:auth.currentUser.uid});
+    w.set(doc(db,"studyRooms","current"),{json:JSON.stringify(next),updatedAt:serverTimestamp(),updatedBy:auth.currentUser.uid});
+    await w.commit();msg("保存しました。全ユーザーに反映されます。");loadBackups();
+   }catch(e){msg("保存に失敗しました。既存データは変更されていません。\n"+fsErr(e))}
+  };
+  $("ad-unshare").onclick=async()=>{
+   if(!SR.shared)return msg("現在、共有中のデータはありません");
+   if(!confirm("共有を解除し、従来の表示（ショートカット取得データ）に戻します。現在の共有データはバックアップされます。"))return;
+   try{
+    const w=writeBatch(db);
+    w.set(doc(collection(db,"backups")),{json:JSON.stringify(SR.shared),savedAt:serverTimestamp(),by:auth.currentUser.uid});
+    w.delete(doc(db,"studyRooms","current"));
+    await w.commit();msg("共有を解除しました");loadBackups();
+   }catch(e){msg("失敗しました。既存データは変更されていません。\n"+fsErr(e))}
+  };
+  $("ad-test").onclick=async()=>{
+   const p=$("ad-tester");
+   if(!p.hidden){p.hidden=true;return}
+   try{await getDoc(doc(db,"admin","probe"));testerOK=true;p.hidden=false;$("ad-tmsg").textContent="テストデータはこの画面内だけで使われ、保存・共有されません。"}
+   catch(e){testerOK=false;$("ad-tmsg").textContent="サーバーで管理者権限を確認できませんでした";p.hidden=false}
+  };
+  document.querySelectorAll("#ad-tester .tp").forEach(b=>b.onclick=()=>applyTest(+b.dataset.p));
+  $("ad-real").onclick=()=>{endTest();$("ad-tester").hidden=true};
+ }
+ function teardownAdmin(){endTest(true);testerOK=false;$("admin-slot").innerHTML=""}
+
+ /* ---- ログイン状態 ---- */
+ m.onAuthStateChanged(auth,user=>{
+  if(unsub){unsub();unsub=null}
+  teardownAdmin();
+  if(!user){isAdmin=false;SR.shared=null;showLogin();setMode("login");return}
+  isAdmin=!!ADMIN_UID&&user.uid===ADMIN_UID;
+  loginEl.hidden=true;document.body.classList.remove("locked");
+  if(isAdmin)buildAdmin();
+  unsub=onSnapshot(doc(db,"studyRooms","current"),
+   snap=>{SR.shared=parseShared(snap);refresh()},
+   ()=>{SR.shared=null;refresh()});
+  refresh();
+ });
+}
+main();
+</script>
+</body>
+</html>
