@@ -18,7 +18,7 @@ h1{font-size:29px;letter-spacing:-.04em;margin:0 0 7px;font-weight:700}
 .summary{margin:22px 0 18px;padding:19px 20px;background:#202124;color:white;border-radius:19px}
 .summary-label{font-size:12px;color:#bfc1c5;margin-bottom:9px}
 .summary-main{font-size:23px;font-weight:650;letter-spacing:-.03em}
-.summary-detail{font-size:12px;color:#c5c6ca;margin-top:7px;line-height:1.7}.summary-main{white-space:pre-line;text-transform:uppercase;line-height:1.35}.next-panel{margin:0 0 22px;padding:16px 18px;background:#fff;border:1px solid var(--line);border-radius:16px}.next-label{font-size:11px;letter-spacing:.1em;font-weight:700;color:var(--muted)}.next-name{font-size:17px;font-weight:700;margin-top:7px;text-transform:uppercase}.next-time{font-size:13px;color:#666;margin-top:5px;font-variant-numeric:tabular-nums}
+.summary-detail{font-size:12px;color:#c5c6ca;margin-top:7px;line-height:1.7}.summary-main{white-space:pre-line;text-transform:uppercase;line-height:1.35}.next-panel{margin:-8px 0 18px;padding:9px 13px;background:#fff;border:1px solid var(--line);border-radius:12px}.next-label{font-size:9px;letter-spacing:.1em;font-weight:700;color:var(--muted)}.next-name{font-size:12px;font-weight:700;margin-top:3px;text-transform:uppercase}.next-time{font-size:10px;color:#777;margin-top:2px;font-variant-numeric:tabular-nums}
 .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:25px 0 13px}
 .toolbar h2{font-size:16px;margin:0}
 .date-select{border:1px solid var(--line);background:white;border-radius:11px;padding:9px 11px;font:inherit;font-size:13px;color:var(--ink);max-width:58%}
@@ -88,35 +88,42 @@ function render(){
  const old=select.value;
  select.innerHTML="";
  dates.forEach(d=>{const o=document.createElement("option");o.value=d;o.textContent=dateLabel(d);select.append(o)});
- let selected=dates.find(d=>parseDate(d)===todayKey())||dates[0];
- if(dates.includes(old))selected=old;
- select.value=selected||"";
- const current=dataset.rooms.filter(r=>r.date===selected);
+ const todayDate=dates.find(d=>parseDate(d)===todayKey())||"";
+ let selected=dates.includes(old)?old:(todayDate||dates[0]||"");
+ select.value=selected;
+
+ // AVAILABLE NOW / NEXT AVAILABLE always reflect today's live status,
+ // regardless of which date is selected in the schedule list.
  const now=nowMinutes();
- const isToday=parseDate(selected)===todayKey();
- const timed=current.map(r=>({...r,_time:hm(r.time)})).filter(r=>r._time);
- const active=isToday?timed.filter(r=>now>=r._time.start&&now<r._time.end):[];
- const upcoming=isToday?timed.filter(r=>r._time.start>now).sort((a,b)=>a._time.start-b._time.start):[];
- const remaining=isToday?timed.filter(r=>now<r._time.end):timed;
- $("today-label").textContent=isToday?"AVAILABLE NOW":selected;
- $("summary-main").textContent=isToday?(active.length?active.map(r=>r.room.toUpperCase()).join("\n") :"NO ROOM AVAILABLE"):`${current.length} ROOMS SCHEDULED`;
- $("summary-detail").textContent=isToday?(active.length?`${active.length}室 利用可能`:(upcoming.length?"次の利用開始を下に表示しています":"本日の利用時間は終了しました")):"選択した日付の自習室予定";
+ const todayRooms=dataset.rooms.filter(r=>r.date===todayDate).map(r=>({...r,_time:hm(r.time)})).filter(r=>r._time);
+ const active=todayRooms.filter(r=>now>=r._time.start&&now<r._time.end);
+ const upcoming=todayRooms.filter(r=>r._time.start>now).sort((a,b)=>a._time.start-b._time.start);
+ const remainingToday=todayRooms.filter(r=>now<r._time.end);
+ $("today-label").textContent="AVAILABLE NOW";
+ $("summary-main").textContent=active.length?active.map(r=>r.room.toUpperCase()).join("\n"):"NO ROOM AVAILABLE";
+ $("summary-detail").textContent=active.length?active.map(r=>`${r.time}`).join("  /  "):(upcoming.length?"現在利用できる自習室はありません":"本日の利用時間は終了しました");
  const nextPanel=$("next-panel");
- if(isToday&&upcoming.length){
+ if(upcoming.length){
   nextPanel.style.display="block";
   $("next-name").textContent=upcoming[0].room.toUpperCase();
   $("next-time").textContent=`${upcoming[0].time} から利用可能`;
  }else{
-  nextPanel.style.display=isToday?"block":"none";
-  $("next-name").textContent=isToday?"NO UPCOMING ROOM":"—";
-  $("next-time").textContent=isToday?"次の利用予定はありません":"";
+  nextPanel.style.display="block";
+  $("next-name").textContent="—";
+  $("next-time").textContent="次の利用予定はありません";
  }
- $("count").textContent=isToday?`本日の残り ${remaining.length}件`:`${selected} ／ ${current.length}件`;
+
+ // The date selector controls only the schedule below, never the live panel.
+ const selectedRooms=dataset.rooms.filter(r=>r.date===selected).map(r=>({...r,_time:hm(r.time)})).filter(r=>r._time);
+ const viewingToday=parseDate(selected)===todayKey();
+ const visibleRooms=viewingToday?selectedRooms.filter(r=>now<r._time.end):selectedRooms;
+ $("count").textContent=selected?dateLabel(selected)+" の予定":"予定はありません";
  const list=$("room-list");list.innerHTML="";
- if(!remaining.length){list.innerHTML='<div class="empty">現在利用できる自習室・今後の利用予定はありません。</div>'}
- else remaining.forEach(r=>{
-  const t=r._time;const isActive=isToday&&now>=t.start&&now<t.end;
-  const status=isActive?'<span class="status open">利用可能</span>':(isToday?'<span class="status next">開始前</span>':'');
+ if(!visibleRooms.length){
+  list.innerHTML='<div class="empty">この日の表示できる自習室はありません。</div>';
+ }else visibleRooms.forEach(r=>{
+  const t=r._time;const isActive=viewingToday&&now>=t.start&&now<t.end;
+  const status=isActive?'<span class="status open">利用可能</span>':(viewingToday?'<span class="status next">開始前</span>':'');
   const el=document.createElement("article");el.className="room";
   const left=document.createElement("div");left.innerHTML=`<div class="room-name"></div><div class="room-note"></div>`;
   left.querySelector(".room-name").textContent=r.room;
