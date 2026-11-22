@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7">
+<title>Study Rooms</title>
+<style>
+:root{color-scheme:light;--bg:#f5f5f7;--card:#fff;--ink:#202124;--muted:#85878c;--line:#e8e8eb;--green:#16845b;--green-bg:#e9f6ef;--blue:#3868bd}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+main{width:min(100%,680px);margin:0 auto;padding:calc(24px + env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+.brand{font-size:13px;font-weight:700;letter-spacing:.12em;color:#777}
+.school{font-size:12px;color:var(--muted)}
+h1{font-size:29px;letter-spacing:-.04em;margin:0 0 7px;font-weight:700}
+.sub{font-size:13px;color:var(--muted);margin:0}
+.summary{margin:22px 0 18px;padding:19px 20px;background:#202124;color:white;border-radius:19px}
+.summary-label{font-size:12px;color:#bfc1c5;margin-bottom:9px}
+.summary-main{font-size:23px;font-weight:650;letter-spacing:-.03em}
+.summary-detail{font-size:12px;color:#c5c6ca;margin-top:7px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:25px 0 13px}
+.toolbar h2{font-size:16px;margin:0}
+.date-select{border:1px solid var(--line);background:white;border-radius:11px;padding:9px 11px;font:inherit;font-size:13px;color:var(--ink);max-width:58%}
+.count{font-size:12px;color:var(--muted);margin:0 0 12px}
+.room-list{display:grid;gap:10px}
+.room{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 17px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.room-name{font-size:17px;font-weight:650;letter-spacing:-.02em}
+.room-note{font-size:11px;color:var(--muted);margin-top:5px}
+.room-time{text-align:right;white-space:nowrap;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.status{display:inline-block;margin-top:6px;font-size:10px;font-weight:650;padding:4px 8px;border-radius:20px;background:#f0f0f2;color:#777}
+.status.open{background:var(--green-bg);color:var(--green)}
+.status.next{background:#edf2fc;color:var(--blue)}
+.empty{padding:30px 18px;text-align:center;background:white;border:1px solid var(--line);border-radius:16px;color:var(--muted);font-size:13px;line-height:1.8}
+.notice{margin-top:22px;padding:14px 15px;border-radius:13px;background:#eeeeF1;color:#777;font-size:11px;line-height:1.7}
+.footer{display:flex;justify-content:space-between;align-items:center;margin-top:18px;color:var(--muted);font-size:11px}
+button{border:0;background:transparent;color:var(--blue);font:inherit;font-size:12px;padding:8px 0}
+#import{display:none;margin-top:18px;padding:14px;background:white;border:1px solid var(--line);border-radius:14px}
+#import textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:9px;padding:10px;font:12px ui-monospace,monospace}
+#import button{background:#202124;color:white;border-radius:9px;padding:10px 14px;margin-top:8px}
+@media(min-width:600px){main{padding-top:42px}.summary{padding:22px 24px}}
+</style>
+</head>
+<body>
+<main>
+<header><div class="brand">STUDY ROOMS</div><div class="school" id="school">校舎未設定</div></header>
+<section>
+<h1>自習室</h1>
+<p class="sub">今日、利用できる教室を確認</p>
+</section>
+<section class="summary">
+<div class="summary-label" id="today-label">本日の状況</div>
+<div class="summary-main" id="summary-main">データを待っています</div>
+<div class="summary-detail" id="summary-detail">河合塾のページからショートカットでデータを取り込んでください。</div>
+</section>
+<div class="toolbar"><h2>教室一覧</h2><select class="date-select" id="date-select" aria-label="日付"></select></div>
+<p class="count" id="count"></p>
+<section class="room-list" id="room-list"><div class="empty">まだデータがありません。<br>河合塾の自習室ページでショートカットを実行してください。</div></section>
+<div class="notice">自習室は変更になる場合があります。利用前に校舎の掲示板で最新情報を確認してください。満席の場合は入室できないことがあります。</div>
+<div class="footer"><span id="updated">最終更新：未取得</span><button id="toggle-import">JSONを手動で読み込む</button></div>
+<section id="import"><textarea id="json-input" placeholder="ショートカットで取得したJSONを貼り付け"></textarea><button id="load-json">読み込む</button></section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let dataset = null;
+const pad = n => String(n).padStart(2,"0");
+function parseDate(s){
+  const m=s.match(/(\d+)月(\d+)日/);
+  if(!m)return null;
+  const y=new Date().getFullYear();
+  return `${y}-${pad(+m[1])}-${pad(+m[2])}`;
+}
+function dateLabel(s){return s.replace(/[（）]/g," ").replace(/\s+/g," ").trim();}
+function hm(s){
+  const m=s.match(/(\d{1,2}):(\d{2})\s*～\s*(\d{1,2}):(\d{2})/);
+  return m?{start:+m[1]*60 + +m[2],end:+m[3]*60 + +m[4]}:null;
+}
+function nowMinutes(){const d=new Date();return d.getHours()*60+d.getMinutes()}
+function todayKey(){
+ const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function render(){
+ if(!dataset || !Array.isArray(dataset.rooms))return;
+ $("school").textContent=dataset.school||"校舎";
+ const dates=[...new Set(dataset.rooms.map(r=>r.date))];
+ const select=$("date-select");
+ const old=select.value;
+ select.innerHTML="";
+ dates.forEach(d=>{const o=document.createElement("option");o.value=d;o.textContent=dateLabel(d);select.append(o)});
+ let selected=dates.find(d=>parseDate(d)===todayKey())||dates[0];
+ if(dates.includes(old))selected=old;
+ select.value=selected||"";
+ const current=dataset.rooms.filter(r=>r.date===selected);
+ const now=nowMinutes();
+ const isToday=parseDate(selected)===todayKey();
+ const active=isToday?current.filter(r=>{const t=hm(r.time);return t&&now>=t.start&&now<t.end}):[];
+ const upcoming=isToday?current.filter(r=>{const t=hm(r.time);return t&&t.start>now}).sort((a,b)=>hm(a.time).start-hm(b.time).start):[];
+ $("today-label").textContent=isToday?"現在の状況":selected;
+ $("summary-main").textContent=isToday?(active.length?`${active.length}教室が利用可能`:upcoming.length?"現在利用できる教室はありません":"本日の利用時間は終了"):`${current.length}件の予定`;
+ $("summary-detail").textContent=isToday?(active.length?`利用中：${active.map(r=>r.room).join("、")}`:upcoming.length?`次の開始：${upcoming[0].room}　${upcoming[0].time}`:"時間割を確認してください"):"日付を選択して教室と利用時間を確認できます。";
+ $("count").textContent=`${selected} ／ ${current.length}件`;
+ const list=$("room-list");list.innerHTML="";
+ if(!current.length){list.innerHTML='<div class="empty">この日の自習室情報はありません。</div>';return}
+ current.forEach(r=>{
+  const t=hm(r.time);let status="";
+  if(isToday&&t&&now>=t.start&&now<t.end)status='<span class="status open">利用可能</span>';
+  else if(isToday&&t&&t.start>now)status='<span class="status next">開始前</span>';
+  else if(isToday&&t&&now>=t.end)status='<span class="status">終了</span>';
+  const el=document.createElement("article");el.className="room";
+  const left=document.createElement("div");left.innerHTML=`<div class="room-name"></div><div class="room-note"></div>`;
+  left.querySelector(".room-name").textContent=r.room;
+  left.querySelector(".room-note").textContent=r.note||"";
+  const right=document.createElement("div");right.className="room-time";
+  right.innerHTML=`<div></div>${status}`;
+  right.querySelector("div").textContent=r.time;
+  el.append(left,right);list.append(el);
+ });
+ $("updated").textContent=dataset.updatedAt?`最終取得：${new Date(dataset.updatedAt).toLocaleString("ja-JP")}`:"最終取得：不明";
+}
+function loadData(obj){
+ if(!obj||!Array.isArray(obj.rooms))throw new Error("rooms配列が見つかりません");
+ dataset=obj;
+ try{localStorage.setItem("studyRoomsData",JSON.stringify(obj))}catch(e){}
+ render();
+}
+function fromHash(){
+ const hash=location.hash;
+ if(!hash.startsWith("#data="))return false;
+ try{
+  const raw=decodeURIComponent(hash.slice(6));
+  loadData(JSON.parse(raw));
+  history.replaceState(null,"",location.pathname+location.search);
+  return true;
+ }catch(e){console.error(e);return false}
+}
+$("date-select").addEventListener("change",render);
+$("toggle-import").addEventListener("click",()=>{$("import").style.display=$("import").style.display==="block"?"none":"block"});
+$("load-json").addEventListener("click",()=>{
+ try{loadData(JSON.parse($("json-input").value));$("import").style.display="none";$("json-input").value=""}
+ catch(e){alert("JSONを読み込めませんでした。内容を確認してください。")}
+});
+if(!fromHash()){
+ try{const saved=localStorage.getItem("studyRoomsData");if(saved)loadData(JSON.parse(saved))}catch(e){}
+}
+</script>
+</body>
+</html>
