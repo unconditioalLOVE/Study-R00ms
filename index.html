@@ -65,13 +65,7 @@ h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);mar
 .adbox .col{display:grid;gap:8px}
 .adbox .tp{border:1px solid var(--line);background:#fafafa;border-radius:10px;padding:11px 12px;color:var(--ink);text-align:left;font-size:13px}
 .adbox .msg{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;white-space:pre-line}
-.sm-room+.sm-room{margin-top:12px}
 .sm-time{font-size:11px;font-weight:500;letter-spacing:0;text-transform:none;color:#c5c6ca;margin-left:8px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.summary .cr-btn{display:block;color:#bfc1c5;font-size:11px;padding:6px 0 2px;text-transform:none;letter-spacing:0;font-weight:500;text-align:left}
-.cr-pick{display:flex;gap:8px;margin-top:6px}
-.summary .cr-pick button{width:38px;height:34px;padding:0;border:1px solid #55575c;border-radius:9px;color:#e4e5e8;font-size:14px;font-weight:600}
-.summary .cr-pick button.on{background:#fff;color:#202124;border-color:#fff}
-.cr-cap{font-size:10px;color:#9b9da2;margin-top:6px;line-height:1.6;text-transform:none;letter-spacing:0;font-weight:400}
 .thread{display:grid;gap:8px;margin-top:10px}
 .bub{padding:8px 10px;border-radius:10px;background:#f3f3f5;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
 .bub.adm{background:#edf2fc}
@@ -141,9 +135,7 @@ function nowMinutes(){if(SR.test)return SR.test.now;const d=new Date();return d.
 function todayKey(){
  const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
-let crowdOpen=null;
 const fmtHM=m=>`${pad(Math.floor(m/60))}:${pad(m%60)}`;
-const CROWD=["非常に空いている","空いている","普通","混んでいる","非常に混んでいる"];
 function renderSummary(active,now,hasUpcoming){
  const main=$("summary-main"),det=$("summary-detail");
  main.innerHTML="";
@@ -152,34 +144,12 @@ function renderSummary(active,now,hasUpcoming){
   det.textContent=hasUpcoming?"現在利用できる自習室はありません":"本日の利用時間は終了しました";
   return;
  }
- const canRate=!SR.test&&typeof SR.rate==="function"&&typeof SR.crowd==="function";
  active.forEach(r=>{
   const box=document.createElement("div");box.className="sm-room";
   const line=document.createElement("div");
   const name=document.createElement("span");name.textContent=r.room.toUpperCase();
   const tm=document.createElement("span");tm.className="sm-time";tm.textContent=`${fmtHM(r._time.start)}〜${fmtHM(r._time.end)}`;
   line.append(name,tm);box.append(line);
-  if(canRate){
-   const c=SR.crowd(r.room);
-   const btn=document.createElement("button");btn.type="button";btn.className="cr-btn";
-   btn.textContent=c.count?`混雑度 ${c.avg.toFixed(1)}・${CROWD[Math.min(4,Math.max(0,Math.round(c.avg)-1))]}（${c.count}人）`:"混雑度 未評価";
-   btn.textContent+=crowdOpen===r.room?"  ▴":"  ▾ 評価";
-   btn.onclick=()=>{crowdOpen=crowdOpen===r.room?null:r.room;render()};
-   box.append(btn);
-   if(crowdOpen===r.room){
-    const pick=document.createElement("div");pick.className="cr-pick";
-    for(let v=1;v<=5;v++){
-     const b=document.createElement("button");b.type="button";b.textContent=v;b.setAttribute("aria-label",`${v} ${CROWD[v-1]}`);
-     if(c.mine===v)b.className="on";
-     b.onclick=()=>{SR.rate(r.room,v);crowdOpen=null;render()};
-     pick.append(b);
-    }
-    const cap=document.createElement("div");cap.className="cr-cap";
-    cap.textContent="1 非常に空いている 〜 5 非常に混んでいる"+(c.mine?`\nあなたの評価：${c.mine} ${CROWD[c.mine-1]}`:"");
-    cap.style.whiteSpace="pre-line";
-    box.append(pick,cap);
-   }
-  }
   main.append(box);
  });
  // 全体の残り時間＝現在時刻から、利用中の教室のうち最も遅い終了時刻まで
@@ -504,33 +474,6 @@ async function main(){
  }
  function teardownAdmin(){endTest(true);testerOK=false;$("admin-slot").innerHTML=""}
 
- /* ---- 混雑度評価（クラスごと・1人1票・再評価で更新）---- */
- const RATE_TTL=3*3600*1000;
- let unsubRate=null,rateDay="",rateDocs=[];
- const tsMs=x=>x&&x.toMillis?x.toMillis():Date.now();
- function startRatings(){
-  if(unsubRate)unsubRate();
-  rateDay=todayKey();
-  unsubRate=onSnapshot(query(collection(db,"ratings"),where("day","==",rateDay)),
-   snap=>{rateDocs=snap.docs.map(d=>d.data());refresh()},()=>{rateDocs=[]});
- }
- function stopRatings(){if(unsubRate){unsubRate();unsubRate=null}rateDocs=[];rateDay="";SR.rate=null;SR.crowd=null}
- function enableRatings(user){
-  startRatings();
-  SR.crowd=room=>{
-   const k=encodeURIComponent(room.trim()),now=Date.now();let sum=0,count=0,mine=0;
-   rateDocs.forEach(x=>{if(x.roomKey!==k||now-tsMs(x.updatedAt)>RATE_TTL)return;sum+=x.value;count++;if(x.uid===user.uid)mine=x.value});
-   return{avg:count?sum/count:0,count,mine};
-  };
-  SR.rate=async(room,v)=>{
-   if(!(v>=1&&v<=5))return;
-   const day=todayKey(),roomKey=encodeURIComponent(room.trim());
-   try{await setDoc(doc(db,"ratings",`${day}~${roomKey}~${user.uid}`),{day,roomKey,uid:user.uid,value:v,updatedAt:serverTimestamp()})}
-   catch(e){alert("評価を送信できませんでした")}
-  };
- }
- setInterval(()=>{if(unsubRate&&rateDay!==todayKey())startRatings()},60000);
-
  /* ---- 問い合わせ（一般ユーザー → 管理者）---- */
  let unsubMsg=null,myMsgs=[];
  const fmtTs=ms=>new Date(ms).toLocaleString("ja-JP",{year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
@@ -618,7 +561,6 @@ async function main(){
  }
  function stopAll(){
   if(unsub){unsub();unsub=null}
-  stopRatings();
   if(unsubMsg){unsubMsg();unsubMsg=null}
   if(unsubAdm){unsubAdm();unsubAdm=null}
   myMsgs=[];allMsgs=[];openThread=null;
@@ -632,7 +574,6 @@ async function main(){
   if(!user){isAdmin=false;SR.shared=null;showLogin();setMode("login");return}
   isAdmin=!!ADMIN_UID&&user.uid===ADMIN_UID;
   loginEl.hidden=true;document.body.classList.remove("locked");
-  enableRatings(user);
   if(isAdmin){
    buildAdmin();
    unsubAdm=onSnapshot(query(collection(db,"messages"),orderBy("createdAt","desc"),limit(300)),
