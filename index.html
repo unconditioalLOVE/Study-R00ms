@@ -1,8 +1,6 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <link rel="icon" href="./IMG_4943.jpeg" type="image/jpeg">
-<link rel="apple-touch-icon" href="./IMG_4943.jpeg">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f5f7">
@@ -67,6 +65,21 @@ h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);mar
 .adbox .col{display:grid;gap:8px}
 .adbox .tp{border:1px solid var(--line);background:#fafafa;border-radius:10px;padding:11px 12px;color:var(--ink);text-align:left;font-size:13px}
 .adbox .msg{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.7;white-space:pre-line}
+.sm-room+.sm-room{margin-top:12px}
+.sm-time{font-size:11px;font-weight:500;letter-spacing:0;text-transform:none;color:#c5c6ca;margin-left:8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.summary .cr-btn{display:block;color:#bfc1c5;font-size:11px;padding:6px 0 2px;text-transform:none;letter-spacing:0;font-weight:500;text-align:left}
+.cr-pick{display:flex;gap:8px;margin-top:6px}
+.summary .cr-pick button{width:38px;height:34px;padding:0;border:1px solid #55575c;border-radius:9px;color:#e4e5e8;font-size:14px;font-weight:600}
+.summary .cr-pick button.on{background:#fff;color:#202124;border-color:#fff}
+.cr-cap{font-size:10px;color:#9b9da2;margin-top:6px;line-height:1.6;text-transform:none;letter-spacing:0;font-weight:400}
+.thread{display:grid;gap:8px;margin-top:10px}
+.bub{padding:8px 10px;border-radius:10px;background:#f3f3f5;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.bub.adm{background:#edf2fc}
+.bub .bh{font-size:10px;color:var(--muted);margin-bottom:2px}
+#ct-text{min-height:90px}
+.dot{color:#d4553a}
+.ml-row{display:block;width:100%;text-align:left;padding:10px 0;border-bottom:1px solid var(--line);color:var(--ink);font-size:13px}
+.ml-sub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #test-banner{margin:14px 0 -6px;padding:8px 12px;border-radius:10px;background:#fff4d6;color:#7a5a00;font-size:11px;line-height:1.6}
 </style>
 </head>
@@ -90,7 +103,8 @@ h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);mar
 <div class="notice">自習室は変更になる場合があります。利用前に校舎の掲示板で最新情報を確認してください。満席の場合は入室できないことがあります。</div>
 <div class="footer"><span id="updated">最終更新：未取得</span><button id="toggle-import">JSONを手動で読み込む</button></div>
 <section id="import"><textarea id="json-input" placeholder="ショートカットで取得したJSONを貼り付け"></textarea><button id="load-json">読み込む</button></section>
-<div class="tools"><button type="button" id="logout">ログアウト</button></div>
+<div class="tools"><button type="button" id="logout">ログアウト</button><button type="button" id="contact-btn" hidden>管理者へ連絡<span class="dot" id="ct-dot" hidden> ●</span></button></div>
+<section class="adbox" id="contact" hidden><textarea id="ct-text" maxlength="1000" placeholder="管理者への連絡内容（1000文字まで）"></textarea><div class="row"><button type="button" class="pri" id="ct-send">送信</button></div><div class="msg" id="ct-msg"></div><div class="thread" id="ct-thread"></div></section>
 <div id="admin-slot"></div>
 <div class="credit">DEVELOPED BY unconditionalLOVE</div>
 </main>
@@ -127,6 +141,51 @@ function nowMinutes(){if(SR.test)return SR.test.now;const d=new Date();return d.
 function todayKey(){
  const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
+let crowdOpen=null;
+const fmtHM=m=>`${pad(Math.floor(m/60))}:${pad(m%60)}`;
+const CROWD=["非常に空いている","空いている","普通","混んでいる","非常に混んでいる"];
+function renderSummary(active,now,hasUpcoming){
+ const main=$("summary-main"),det=$("summary-detail");
+ main.innerHTML="";
+ if(!active.length){
+  main.textContent="NO ROOM AVAILABLE";
+  det.textContent=hasUpcoming?"現在利用できる自習室はありません":"本日の利用時間は終了しました";
+  return;
+ }
+ const canRate=!SR.test&&typeof SR.rate==="function"&&typeof SR.crowd==="function";
+ active.forEach(r=>{
+  const box=document.createElement("div");box.className="sm-room";
+  const line=document.createElement("div");
+  const name=document.createElement("span");name.textContent=r.room.toUpperCase();
+  const tm=document.createElement("span");tm.className="sm-time";tm.textContent=`${fmtHM(r._time.start)}〜${fmtHM(r._time.end)}`;
+  line.append(name,tm);box.append(line);
+  if(canRate){
+   const c=SR.crowd(r.room);
+   const btn=document.createElement("button");btn.type="button";btn.className="cr-btn";
+   btn.textContent=c.count?`混雑度 ${c.avg.toFixed(1)}・${CROWD[Math.min(4,Math.max(0,Math.round(c.avg)-1))]}（${c.count}人）`:"混雑度 未評価";
+   btn.textContent+=crowdOpen===r.room?"  ▴":"  ▾ 評価";
+   btn.onclick=()=>{crowdOpen=crowdOpen===r.room?null:r.room;render()};
+   box.append(btn);
+   if(crowdOpen===r.room){
+    const pick=document.createElement("div");pick.className="cr-pick";
+    for(let v=1;v<=5;v++){
+     const b=document.createElement("button");b.type="button";b.textContent=v;b.setAttribute("aria-label",`${v} ${CROWD[v-1]}`);
+     if(c.mine===v)b.className="on";
+     b.onclick=()=>{SR.rate(r.room,v);crowdOpen=null;render()};
+     pick.append(b);
+    }
+    const cap=document.createElement("div");cap.className="cr-cap";
+    cap.textContent="1 非常に空いている 〜 5 非常に混んでいる"+(c.mine?`\nあなたの評価：${c.mine} ${CROWD[c.mine-1]}`:"");
+    cap.style.whiteSpace="pre-line";
+    box.append(pick,cap);
+   }
+  }
+  main.append(box);
+ });
+ // 全体の残り時間＝現在時刻から、利用中の教室のうち最も遅い終了時刻まで
+ const rem=Math.max(...active.map(r=>r._time.end))-now;
+ det.textContent=`あと${rem>=60?Math.floor(rem/60)+"時間":""}${rem%60?rem%60+"分":""}勉強できます`;
+}
 function render(){
  const dataset=activeData();
  if(!dataset || !Array.isArray(dataset.rooms))return;
@@ -148,8 +207,7 @@ function render(){
  const upcoming=todayRooms.filter(r=>r._time.start>now).sort((a,b)=>a._time.start-b._time.start);
  const remainingToday=todayRooms.filter(r=>now<r._time.end);
  $("today-label").textContent="AVAILABLE NOW";
- $("summary-main").textContent=active.length?active.map(r=>r.room.toUpperCase()).join("\n"):"NO ROOM AVAILABLE";
- $("summary-detail").textContent=active.length?active.map(r=>`${r.time}`).join("  /  "):(upcoming.length?"現在利用できる自習室はありません":"本日の利用時間は終了しました");
+ renderSummary(active,now,upcoming.length>0);
  const nextPanel=$("next-panel");
  if(upcoming.length){
   nextPanel.style.display="block";
@@ -260,7 +318,7 @@ async function main(){
   $("login-submit").disabled=true;return;
  }
  const app=m.initializeApp(FIREBASE_CONFIG),auth=m.getAuth(app),db=m.getFirestore(app);
- const {doc,collection,getDoc,getDocs,onSnapshot,writeBatch,serverTimestamp,query,orderBy,limit}=m;
+ const {doc,collection,getDoc,getDocs,onSnapshot,writeBatch,serverTimestamp,query,orderBy,limit,addDoc,setDoc,where}=m;
  let isAdmin=false,testerOK=false,unsub=null,rendered=false;
 
  /* ---- 学籍番号 → 擬似メール（学籍番号そのものは保存しない）---- */
@@ -287,8 +345,8 @@ async function main(){
   btn.disabled=true;setMsg("");
   try{
    const email=await idToEmail(id);
-   if(mode==="register")await m.createUserWithEmailAndPassword(auth,email,pw);
-   else await m.signInWithEmailAndPassword(auth,email,pw);
+   const cred=mode==="register"?await m.createUserWithEmailAndPassword(auth,email,pw):await m.signInWithEmailAndPassword(auth,email,pw);
+   try{localStorage.setItem("sr_sid_"+cred.user.uid,id)}catch(e){}
    $("pw").value="";$("pw2").value="";$("sid").value="";
   }catch(e){setMsg(authErr(e))}
   finally{btn.disabled=false}
@@ -358,7 +416,7 @@ async function main(){
  }
  function buildAdmin(){
   $("admin-slot").innerHTML=`
-<div class="tools"><span class="admin-tag">ADMIN</span><button type="button" id="ad-edit">JSON編集</button><button type="button" id="ad-test">TESTER MODE</button></div>
+<div class="tools"><span class="admin-tag">ADMIN</span><button type="button" id="ad-edit">JSON編集</button><button type="button" id="ad-test">TESTER MODE</button><button type="button" id="ad-mail-btn">メールボックス<span class="dot" id="ad-dot" hidden> ●</span></button></div>
 <section class="adbox" id="ad-editor" hidden>
 <textarea id="ad-json" spellcheck="false"></textarea>
 <div class="row"><button type="button" class="pri" id="ad-save">検証して保存</button><button type="button" id="ad-check">検証のみ</button><button type="button" id="ad-reload">現在のデータを読込</button></div>
@@ -370,6 +428,16 @@ async function main(){
 <div class="col"><button type="button" class="tp" data-p="1">1. 3室が利用可能</button><button type="button" class="tp" data-p="2">2. 1室のみ利用可能</button><button type="button" class="tp" data-p="3">3. 利用可能なし・次の利用予定あり</button><button type="button" class="tp" data-p="4">4. 本日利用可能なし・次の利用予定なし</button></div>
 <div class="row"><button type="button" class="pri" id="ad-real">実データに戻す</button></div>
 <div class="msg" id="ad-tmsg"></div>
+</section>
+<section class="adbox" id="ad-mail" hidden>
+<div id="ml-list"></div>
+<div id="ml-conv" hidden>
+<div class="row" style="margin-top:0"><button type="button" id="ml-back">← 一覧</button><span class="admin-tag" id="ml-who"></span></div>
+<div class="thread" id="ml-msgs"></div>
+<textarea id="ml-reply" maxlength="1000" placeholder="返信を入力" style="min-height:80px;margin-top:10px"></textarea>
+<div class="row"><button type="button" class="pri" id="ml-send">返信する</button></div>
+</div>
+<div class="msg" id="ml-msg"></div>
 </section>`;
   const msg=t=>{$("ad-msg").textContent=t||""};
   const real=()=>SR.shared||SR.legacy();
@@ -426,17 +494,150 @@ async function main(){
   };
   document.querySelectorAll("#ad-tester .tp").forEach(b=>b.onclick=()=>applyTest(+b.dataset.p));
   $("ad-real").onclick=()=>{endTest();$("ad-tester").hidden=true};
+  $("ad-mail-btn").onclick=()=>{const p=$("ad-mail");p.hidden=!p.hidden;openThread=null;if(!p.hidden)renderMail()};
+  $("ml-back").onclick=()=>{openThread=null;renderMail()};
+  $("ml-send").onclick=async()=>{
+   const text=$("ml-reply").value.trim();if(!text||!openThread)return;
+   try{await addDoc(collection(db,"messages"),{thread:openThread,from:"admin",text,createdAt:serverTimestamp()});$("ml-reply").value="";$("ml-msg").textContent=""}
+   catch(e){$("ml-msg").textContent=fsErr(e)}
+  };
  }
  function teardownAdmin(){endTest(true);testerOK=false;$("admin-slot").innerHTML=""}
 
+ /* ---- 混雑度評価（クラスごと・1人1票・再評価で更新）---- */
+ const RATE_TTL=3*3600*1000;
+ let unsubRate=null,rateDay="",rateDocs=[];
+ const tsMs=x=>x&&x.toMillis?x.toMillis():Date.now();
+ function startRatings(){
+  if(unsubRate)unsubRate();
+  rateDay=todayKey();
+  unsubRate=onSnapshot(query(collection(db,"ratings"),where("day","==",rateDay)),
+   snap=>{rateDocs=snap.docs.map(d=>d.data());refresh()},()=>{rateDocs=[]});
+ }
+ function stopRatings(){if(unsubRate){unsubRate();unsubRate=null}rateDocs=[];rateDay="";SR.rate=null;SR.crowd=null}
+ function enableRatings(user){
+  startRatings();
+  SR.crowd=room=>{
+   const k=encodeURIComponent(room.trim()),now=Date.now();let sum=0,count=0,mine=0;
+   rateDocs.forEach(x=>{if(x.roomKey!==k||now-tsMs(x.updatedAt)>RATE_TTL)return;sum+=x.value;count++;if(x.uid===user.uid)mine=x.value});
+   return{avg:count?sum/count:0,count,mine};
+  };
+  SR.rate=async(room,v)=>{
+   if(!(v>=1&&v<=5))return;
+   const day=todayKey(),roomKey=encodeURIComponent(room.trim());
+   try{await setDoc(doc(db,"ratings",`${day}~${roomKey}~${user.uid}`),{day,roomKey,uid:user.uid,value:v,updatedAt:serverTimestamp()})}
+   catch(e){alert("評価を送信できませんでした")}
+  };
+ }
+ setInterval(()=>{if(unsubRate&&rateDay!==todayKey())startRatings()},60000);
+
+ /* ---- 問い合わせ（一般ユーザー → 管理者）---- */
+ let unsubMsg=null,myMsgs=[];
+ const fmtTs=ms=>new Date(ms).toLocaleString("ja-JP",{year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
+ function bubble(x,who){
+  const d=document.createElement("div");d.className="bub "+(x.from==="admin"?"adm":"me");
+  const h=document.createElement("div");h.className="bh";h.textContent=`${who} ・ ${fmtTs(tsMs(x.createdAt))}`;
+  const t=document.createElement("div");t.textContent=x.text;d.append(h,t);return d;
+ }
+ function renderThread(){
+  const u=auth.currentUser;if(!u)return;
+  const box=$("ct-thread");box.innerHTML="";
+  myMsgs.forEach(x=>box.append(bubble(x,x.from==="admin"?"管理者":"あなた")));
+  const last=myMsgs.filter(x=>x.from==="admin").map(x=>tsMs(x.createdAt)).pop()||0;
+  const k="sr_seen_"+u.uid;let seen=0;
+  try{seen=+localStorage.getItem(k)||0;if(!$("contact").hidden&&last){seen=Date.now();localStorage.setItem(k,seen)}}catch(e){}
+  $("ct-dot").hidden=!(last>seen);
+ }
+ function startUserMsgs(user){
+  unsubMsg=onSnapshot(query(collection(db,"messages"),where("thread","==",user.uid)),
+   snap=>{myMsgs=snap.docs.map(d=>d.data()).sort((a,b)=>tsMs(a.createdAt)-tsMs(b.createdAt));renderThread()},()=>{});
+ }
+ $("contact-btn").addEventListener("click",()=>{const c=$("contact");c.hidden=!c.hidden;if(!c.hidden)renderThread()});
+ $("ct-send").addEventListener("click",async()=>{
+  const u=auth.currentUser,text=$("ct-text").value.trim(),btn=$("ct-send");
+  if(!u||!text)return;
+  if(text.length>1000){$("ct-msg").textContent="1000文字以内で入力してください";return}
+  btn.disabled=true;$("ct-msg").textContent="";
+  try{
+   const data={thread:u.uid,from:"user",text,createdAt:serverTimestamp(),h:u.email.split("@")[0]};
+   let sid=null;try{sid=localStorage.getItem("sr_sid_"+u.uid)}catch(e){}
+   if(sid&&/^\d{6}$/.test(sid))data.sid=sid;
+   await addDoc(collection(db,"messages"),data);
+   $("ct-text").value="";$("ct-msg").textContent="送信しました";
+  }catch(e){$("ct-msg").textContent="送信できませんでした。通信を確認してください。"}
+  finally{btn.disabled=false}
+ });
+
+ /* ---- 管理者メールボックス ---- */
+ let unsubAdm=null,allMsgs=[],openThread=null;
+ const verified=new Map();
+ function verifySid(sid,h){
+  const k=sid+"|"+h;if(verified.has(k))return verified.get(k);
+  verified.set(k,null);
+  idToEmail(sid).then(e=>{verified.set(k,e.split("@")[0]===h);renderMail()});
+  return null;
+ }
+ const seenMap=()=>{try{return JSON.parse(localStorage.getItem("sr_adm_seen")||"{}")}catch(e){return{}}};
+ const setSeen=id=>{try{const s=seenMap();s[id]=Date.now();localStorage.setItem("sr_adm_seen",JSON.stringify(s))}catch(e){}};
+ function threadsOf(){
+  const g=new Map();
+  allMsgs.forEach(x=>{if(!g.has(x.thread))g.set(x.thread,[]);g.get(x.thread).push(x)});
+  const out=[...g.entries()].map(([id,a])=>{a.sort((p,q)=>tsMs(p.createdAt)-tsMs(q.createdAt));return{id,a,last:a[a.length-1]}});
+  return out.sort((p,q)=>tsMs(q.last.createdAt)-tsMs(p.last.createdAt));
+ }
+ const lastUser=t=>t.a.filter(x=>x.from==="user").map(x=>tsMs(x.createdAt)).pop()||0;
+ function who(t){
+  const u=[...t.a].reverse().find(x=>x.from==="user");
+  if(!u||!u.sid)return`学籍番号 不明（${t.id.slice(0,6)}）`;
+  const v=verifySid(u.sid,u.h);
+  return`学籍番号 ${u.sid}${v===true?" ✓":v===false?"（未照合）":""}`;
+ }
+ function renderMail(){
+  if(!$("ad-mail"))return;
+  const ts=threadsOf(),sm=seenMap();
+  $("ad-dot").hidden=!ts.some(t=>lastUser(t)>(sm[t.id]||0));
+  const list=$("ml-list"),conv=$("ml-conv");
+  const t=openThread&&ts.find(x=>x.id===openThread);
+  if(t){
+   setSeen(t.id);
+   list.hidden=true;conv.hidden=false;
+   $("ml-who").textContent=who(t);
+   const box=$("ml-msgs");box.innerHTML="";
+   t.a.forEach(x=>box.append(bubble(x,x.from==="admin"?"管理者（返信）":"ユーザー")));
+   return;
+  }
+  openThread=null;conv.hidden=true;list.hidden=false;list.innerHTML="";
+  if(!ts.length){list.innerHTML='<div class="msg">メッセージはまだありません</div>';return}
+  ts.forEach(x=>{
+   const b=document.createElement("button");b.type="button";b.className="ml-row";
+   const a=document.createElement("div");a.textContent=who(x)+(lastUser(x)>(sm[x.id]||0)?" ●":"");
+   const c=document.createElement("div");c.className="ml-sub";
+   c.textContent=`${fmtTs(tsMs(x.last.createdAt))} ・ ${(x.last.from==="admin"?"返信：":"")+x.last.text.slice(0,40)}`;
+   b.append(a,c);b.onclick=()=>{openThread=x.id;renderMail()};list.append(b);
+  });
+ }
+ function stopAll(){
+  if(unsub){unsub();unsub=null}
+  stopRatings();
+  if(unsubMsg){unsubMsg();unsubMsg=null}
+  if(unsubAdm){unsubAdm();unsubAdm=null}
+  myMsgs=[];allMsgs=[];openThread=null;
+  $("contact-btn").hidden=true;$("contact").hidden=true;$("ct-dot").hidden=true;
+ }
+
  /* ---- ログイン状態 ---- */
  m.onAuthStateChanged(auth,user=>{
-  if(unsub){unsub();unsub=null}
+  stopAll();
   teardownAdmin();
   if(!user){isAdmin=false;SR.shared=null;showLogin();setMode("login");return}
   isAdmin=!!ADMIN_UID&&user.uid===ADMIN_UID;
   loginEl.hidden=true;document.body.classList.remove("locked");
-  if(isAdmin)buildAdmin();
+  enableRatings(user);
+  if(isAdmin){
+   buildAdmin();
+   unsubAdm=onSnapshot(query(collection(db,"messages"),orderBy("createdAt","desc"),limit(300)),
+    snap=>{allMsgs=snap.docs.map(d=>d.data());renderMail()},()=>{});
+  }else{$("contact-btn").hidden=false;startUserMsgs(user)}
   unsub=onSnapshot(doc(db,"studyRooms","current"),
    snap=>{SR.shared=parseShared(snap);refresh()},
    ()=>{SR.shared=null;refresh()});
