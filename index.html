@@ -85,11 +85,14 @@ h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);mar
 .dot{color:#d4553a}
 .ml-row{display:block;width:100%;text-align:left;padding:10px 0;border-bottom:1px solid var(--line);color:var(--ink);font-size:13px}
 .ml-sub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+input,textarea{-webkit-user-select:text;user-select:text}
 .cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:8px;vertical-align:middle;flex:none}
 .sm-at{font-size:10px;font-weight:500;letter-spacing:0;text-transform:none;color:#9b9da2;margin-left:5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .crowd{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin-top:6px}
 .cbtn{width:30px;height:30px;padding:0;border-radius:50%;background:transparent;position:relative}
 .cbtn::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--c);opacity:.35}
+.cbtn.pd::after{opacity:.6;inset:7px;box-shadow:0 0 0 2px #fff,0 0 0 3px var(--c)}
 .cbtn.on::after{opacity:1;inset:7px;box-shadow:0 0 0 2px #fff,0 0 0 3px var(--c)}
 .ccap{font-size:10px;color:var(--muted);flex-basis:100%;margin:0 0 0 4px;line-height:1.4}
 #test-banner{margin:14px 0 -6px;padding:8px 12px;border-radius:10px;background:#fff4d6;color:#7a5a00;font-size:11px;line-height:1.6}
@@ -163,6 +166,8 @@ function todayKey(){
 const fmtHM=m=>`${pad(Math.floor(m/60))}:${pad(m%60)}`;
 // 混雑状況：0未評価(灰) 1比較的空いています(緑) 2混んでいます(オレンジ) 3利用不可(赤)
 const CROWD_LV=[{c:"#9a9ca1",n:"未評価"},{c:"#2fb36b",n:"比較的空いています"},{c:"#f09a2a",n:"混んでいます"},{c:"#e5484d",n:"利用不可"}];
+let crowdOpenId=null;
+SR.closeCrowd=()=>{crowdOpenId=null};
 const crowdAvail=()=>!SR.test&&typeof SR.crowd==="function"&&typeof SR.setCrowd==="function";
 const hhmm=ms=>{const d=new Date(ms);return `${pad(d.getHours())}:${pad(d.getMinutes())}`};
 function renderSummary(active,now,hasUpcoming){
@@ -243,15 +248,25 @@ function render(){
   right.innerHTML=`<div></div>${status}`;
   right.querySelector("div").textContent=r.time;
   if(isActive&&crowdAvail()){
+   const id=`${r.date}|${r.room}|${r.time}`;
    const c=SR.crowd(r)||{level:0,at:0},cur=c.level>0&&c.level<4?c.level:0;
-   const cr=document.createElement("div");cr.className="crowd";
-   CROWD_LV.forEach((lv,i)=>{
-    const b=document.createElement("button");b.type="button";b.className="cbtn"+(cur===i?" on":"");
-    b.style.setProperty("--c",lv.c);b.setAttribute("aria-label",lv.n);b.title=lv.n;
-    b.onclick=()=>SR.setCrowd(r,i);cr.append(b);
-   });
-   const cap=document.createElement("span");cap.className="ccap";
-   if(cur){cap.textContent=CROWD_LV[cur].n;cr.append(cap)}left.append(cr);
+   const pend=typeof SR.crowdPending==="function"?SR.crowdPending(r):null;
+   const dot=document.createElement("span");dot.className="cdot";dot.style.background=CROWD_LV[cur].c;dot.title=CROWD_LV[cur].n;
+   left.querySelector(".room-name").append(dot);
+   el.style.cursor="pointer";el.setAttribute("aria-expanded",String(crowdOpenId===id));
+   el.onclick=()=>{crowdOpenId=crowdOpenId===id?null:id;render()};
+   if(crowdOpenId===id){
+    const cr=document.createElement("div");cr.className="crowd";
+    CROWD_LV.forEach((lv,i)=>{
+     const b=document.createElement("button");b.type="button";
+     b.className="cbtn"+(pend!==null?(pend===i?" pd":""):(cur===i?" on":""));
+     b.style.setProperty("--c",lv.c);b.setAttribute("aria-label",lv.n);b.title=lv.n;
+     b.onclick=ev=>{ev.stopPropagation();if(pend===null)SR.setCrowd(r,i)};
+     cr.append(b);
+    });
+    if(pend===null&&cur){const cap=document.createElement("span");cap.className="ccap";cap.textContent=CROWD_LV[cur].n;cr.append(cap)}
+    left.append(cr);
+   }
   }
   el.append(left,right);list.append(el);
  });
@@ -294,6 +309,9 @@ function tick(){
 tick();setInterval(tick,1000);
 /* アップデートログ（新しいものを上に追加していく） */
 const UPDATES=[
+ {d:"2026-11-24",t:"修正",x:"評価ボタンは、教室一覧のクラスをタップしたときだけ表示するようにしました"},
+ {d:"2026-11-24",t:"修正",x:"画面を押しても文字が選択されないようにしました"},
+ {d:"2026-11-24",t:"導入",x:"過ぎた日の混雑評価を自動で整理するようにしました"},
  {d:"2026-11-24",t:"導入",x:"混雑状況の共有評価（緑・オレンジ・赤／匿名／リアルタイム）を追加しました"},
  {d:"2026-11-24",t:"導入",x:"アプリアイコンを設定しました"},
  {d:"2026-11-24",t:"導入",x:"アップデートログ（この画面）を追加しました"},
@@ -628,7 +646,7 @@ async function main(){
  }
 
  /* ---- 混雑状況（匿名・全ユーザー共有）：UID等は保存しない ---- */
- let unsubCrowd=null,crowdDay="";const crowdMap=new Map();
+ let unsubCrowd=null,crowdDay="";const crowdMap=new Map(),crowdPending=new Map();
  const slotOf=r=>`${fmtHM(r._time.start)}-${fmtHM(r._time.end)}`;
  const crowdId=(day,room,slot)=>`${day}~${encodeURIComponent(room.trim())}~${slot}`;
  function startCrowd(){
@@ -636,7 +654,14 @@ async function main(){
   crowdMap.clear();crowdDay=todayKey();
   // 送信中（未確定）の書き込みは画面に反映しない＝サーバーに保存されたものだけを表示
   unsubCrowd=onSnapshot(query(collection(db,"crowd"),where("day","==",crowdDay)),{includeMetadataChanges:true},
-   snap=>{snap.docs.forEach(d=>{if(!d.metadata.hasPendingWrites)crowdMap.set(d.id,d.data())});refresh()},()=>{});
+   snap=>{
+    snap.docs.forEach(d=>{
+     if(d.metadata.hasPendingWrites)return;
+     crowdMap.set(d.id,d.data());
+     if(crowdPending.get(d.id)===d.data().level){crowdPending.delete(d.id);SR.closeCrowd()}
+    });
+    refresh();
+   },()=>{});
  }
  function enableCrowd(){
   startCrowd();
@@ -644,23 +669,39 @@ async function main(){
    const x=crowdMap.get(crowdId(parseDate(r.date)||"",r.room,slotOf(r)));
    return x?{level:x.level,at:x.at&&x.at.toMillis?x.at.toMillis():0}:null;
   };
+  SR.crowdPending=r=>{const v=crowdPending.get(crowdId(parseDate(r.date)||"",r.room,slotOf(r)));return v===undefined?null:v};
   SR.setCrowd=async(r,level)=>{
    if(SR.test)return;
    const day=todayKey(),now=nowMinutes();
    if(parseDate(r.date)!==day||!(now>=r._time.start&&now<r._time.end)){alert("利用時間外のため評価できません");refresh();return}
+   const id=crowdId(day,r.room,slotOf(r));
+   if(crowdPending.has(id))return;
+   crowdPending.set(id,level);refresh();   // 保存が確認できるまで「送信中」表示
    try{
     await Promise.race([
-     setDoc(doc(db,"crowd",crowdId(day,r.room,slotOf(r))),{day,roomKey:encodeURIComponent(r.room.trim()),slot:slotOf(r),level,at:serverTimestamp()}),
+     setDoc(doc(db,"crowd",id),{day,roomKey:encodeURIComponent(r.room.trim()),slot:slotOf(r),level,at:serverTimestamp()}),
      new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),10000))
     ]);
-   }catch(e){alert("評価を保存できませんでした（"+(e&&e.code||"error")+"）\n通信を確認してください。")}
+    setTimeout(()=>{if(crowdPending.delete(id)){SR.closeCrowd();refresh()}},2500);
+   }catch(e){
+    crowdPending.delete(id);refresh();
+    alert("評価を保存できませんでした（"+(e&&e.code||"error")+"）\n通信を確認してください。");
+   }
   };
  }
  function disableCrowd(){
   if(unsubCrowd){unsubCrowd();unsubCrowd=null}
-  crowdMap.clear();SR.crowd=null;SR.setCrowd=null;
+  crowdMap.clear();crowdPending.clear();SR.crowd=null;SR.setCrowd=null;SR.crowdPending=null;
  }
  setInterval(()=>{if(unsubCrowd&&crowdDay!==todayKey())startCrowd()},60000);
+ // 管理者がログインしたとき、過ぎた日の評価データを削除して整理する
+ async function purgeCrowd(){
+  try{
+   const q=await getDocs(query(collection(db,"crowd"),where("day","<",todayKey())));
+   if(q.empty)return;
+   const w=writeBatch(db);q.docs.slice(0,400).forEach(d=>w.delete(d.ref));await w.commit();
+  }catch(e){}
+ }
 
  /* ---- ログイン状態 ---- */
  m.onAuthStateChanged(auth,user=>{
@@ -676,6 +717,7 @@ async function main(){
     e=>{mailErr="読み込めません（"+(e&&e.code||"error")+"）。Firestoreのルールが最新か確認してください。";renderMail()});
   }
   enableCrowd();
+  if(isAdmin)purgeCrowd();
   if(isAdmin){tbLabel.textContent="✉ メールボックス";topBtn.disabled=false}else syncThanks();
   topBtn.hidden=false;
   unsub=onSnapshot(doc(db,"studyRooms","current"),
