@@ -41,10 +41,11 @@ button{border:0;background:transparent;color:var(--blue);font:inherit;font-size:
 @media(min-width:600px){main{padding-top:42px}.summary{padding:22px 24px}}
 [hidden]{display:none!important}
 .summary{position:relative}
-#top-btn{position:absolute;top:13px;right:13px;display:flex;align-items:center;gap:2px;background:#fff;color:#202124;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;letter-spacing:0;line-height:1;box-shadow:0 1px 0 rgba(255,255,255,.2)}
+.subrow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#top-btn{display:flex;align-items:center;gap:2px;background:#202124;color:#fff;border-radius:999px;padding:9px 14px;font-size:12px;font-weight:700;letter-spacing:0;line-height:1;white-space:nowrap;flex:none}
 #top-btn:active{opacity:.8}
 #top-btn[disabled]{opacity:.7}
-#top-btn .dot{color:#d4553a;font-size:10px}
+#top-btn .dot{color:#ff7a5c;font-size:10px}
 #ad-mail{margin:-6px 0 18px}
 .ml-err{color:#b3402a}
 main{position:relative}
@@ -85,10 +86,9 @@ h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);mar
 <header><div class="brand">STUDY ROOMS</div><div class="school" id="school">校舎未設定</div></header>
 <section>
 <h1>自習室<span class="clock" id="clock"></span></h1>
-<p class="sub">今日、利用できる教室を確認</p>
+<div class="subrow"><p class="sub">今日、利用できる教室を確認</p><button type="button" id="top-btn" hidden><span id="tb-label">♡ 開発者に感謝</span><span class="dot" id="ad-dot" hidden> ●</span></button></div>
 </section>
 <section class="summary">
-<button type="button" id="top-btn" hidden><span id="tb-label">♡ 開発者に感謝</span><span class="dot" id="ad-dot" hidden> ●</span></button>
 <div class="summary-label" id="today-label">本日の状況</div>
 <div class="summary-main" id="summary-main">データを待っています</div>
 <div class="summary-detail" id="summary-detail">河合塾のページからショートカットでデータを取り込んでください。</div>
@@ -249,6 +249,34 @@ function tick(){
  lastMin=m;
 }
 tick();setInterval(tick,1000);
+/* 自動更新：ショートカットからの取り込み・復帰時・新バージョン公開時にリロード不要にする */
+window.addEventListener("hashchange",fromHash);
+function wake(){tick();fromHash();render();checkVersion()}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)wake()});
+window.addEventListener("pageshow",wake);
+window.addEventListener("focus",wake);
+window.addEventListener("storage",e=>{if(e.key==="studyRoomsData"&&e.newValue){try{dataset=JSON.parse(e.newValue);render()}catch(_){}}});
+let verBase=null,lastVer=0;
+async function verTag(){
+ const r=await fetch(location.pathname+location.search,{method:"HEAD",cache:"no-store"});
+ return r.headers.get("etag")||r.headers.get("last-modified")||null;
+}
+async function checkVersion(){
+ if(Date.now()-lastVer<60000)return;lastVer=Date.now();
+ try{
+  const t=await verTag();if(!t)return;
+  if(verBase===null){verBase=t;return}
+  if(t===verBase)return;
+  const a=document.activeElement;
+  if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
+  const ed=document.getElementById("ad-editor");if(ed&&!ed.hidden)return;
+  if(SR.test)return;
+  if(Date.now()-(+sessionStorage.getItem("srReload")||0)<60000)return;
+  sessionStorage.setItem("srReload",Date.now());
+  location.reload();
+ }catch(e){}
+}
+checkVersion();setInterval(checkVersion,300000);
 setTimeout(()=>{if(document.body.classList.contains("locked")&&$("login").hidden){$("login").hidden=false;$("login-msg").textContent="サーバーに接続できません。通信状況を確認してください。"}},8000);
 </script>
 <script type="module">
@@ -476,8 +504,13 @@ async function main(){
   else{
    const data={uid:u.uid,day,h:u.email.split("@")[0],createdAt:serverTimestamp()};
    try{const sid=localStorage.getItem("sr_sid_"+u.uid);if(sid&&/^\d{6}$/.test(sid))data.sid=sid}catch(e){}
-   try{await setDoc(doc(db,"thanks",`${day}~${u.uid}`),data);label="送信しました ♡";try{localStorage.setItem(sentKey(u),day)}catch(e){}}
-   catch(e){label=e&&e.code==="permission-denied"?"送信できません（送信済みの可能性）":"送信できませんでした"}
+   try{
+    await Promise.race([setDoc(doc(db,"thanks",`${day}~${u.uid}`),data),new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),10000))]);
+    label="送信しました ♡";try{localStorage.setItem(sentKey(u),day)}catch(e){}
+   }catch(e){
+    const c=e&&e.code||"error";label="送信できません";
+    alert("送信できませんでした\nエラー: "+c+(c==="permission-denied"?"\n（ルール未公開、または今日すでに送信済み）":c==="timeout"?"\n（通信できません）":""));
+   }
   }
   tbLabel.textContent=label;
   setTimeout(()=>{tbLabel.textContent="♡ 開発者に感謝";topBtn.disabled=false},3000);
@@ -536,7 +569,7 @@ async function main(){
    buildAdmin();
    unsubAdm=onSnapshot(query(collection(db,"thanks"),orderBy("createdAt","desc"),limit(300)),
     snap=>{allThanks=snap.docs.map(d=>d.data());mailErr="";renderMail()},
-    e=>{mailErr="読み込めません。Firestoreのルールが最新か確認してください。";renderMail()});
+    e=>{mailErr="読み込めません（"+(e&&e.code||"error")+"）。Firestoreのルールが最新か確認してください。";renderMail()});
   }
   tbLabel.textContent=isAdmin?"✉ メールボックス":"♡ 開発者に感謝";
   topBtn.hidden=false;
