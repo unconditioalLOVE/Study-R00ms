@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f5f7">
 <title>Study Rooms</title>
+<link rel="icon" href="./IMG_4943.jpeg" type="image/jpeg">
+<link rel="apple-touch-icon" href="./IMG_4943.jpeg">
 <style>
 :root{color-scheme:light;--bg:#f5f5f7;--card:#fff;--ink:#202124;--muted:#85878c;--line:#e8e8eb;--green:#16845b;--green-bg:#e9f6ef;--blue:#3868bd}
 *{box-sizing:border-box}
@@ -41,7 +43,7 @@ button{border:0;background:transparent;color:var(--blue);font:inherit;font-size:
 @media(min-width:600px){main{padding-top:42px}.summary{padding:22px 24px}}
 [hidden]{display:none!important}
 .summary{position:relative}
-.subrow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#top-row{display:flex;justify-content:flex-end;margin:12px 0 -12px}
 #top-btn{display:flex;align-items:center;gap:2px;background:#202124;color:#fff;border-radius:999px;padding:9px 14px;font-size:12px;font-weight:700;letter-spacing:0;line-height:1;white-space:nowrap;flex:none}
 #top-btn:active{opacity:.8}
 #top-btn[disabled]{opacity:.7}
@@ -52,7 +54,13 @@ main{position:relative}
 body.locked main{display:none}
 h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);margin-left:9px;font-variant-numeric:tabular-nums;vertical-align:middle}
 .secta{position:absolute;top:calc(8px + env(safe-area-inset-top));right:18px;font-size:9px;letter-spacing:.03em;color:#a3a5aa;text-transform:none;line-height:1}
-.secta a{color:inherit;text-decoration:none;border-bottom:1px solid #d5d6da}
+.secta #upd-btn{padding:6px 0;font-size:9px;letter-spacing:.03em;color:#a3a5aa;line-height:1}
+#upd-pop{position:absolute;top:38px;right:0;z-index:20;width:min(300px,calc(100vw - 36px));max-height:60vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.08);text-align:left;color:var(--ink);line-height:1.6}
+#upd-pop .ud{font-size:10px;font-weight:700;color:var(--muted);margin:10px 0 4px;letter-spacing:.02em}
+#upd-pop .ud:first-child{margin-top:0}
+#upd-pop .ui{font-size:11px;display:flex;gap:6px}
+#upd-pop .ut{flex:none;font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px;height:15px;margin-top:2px;background:#e8f4ee;color:#1f7a50}
+#upd-pop .ut.fix{background:#e9eefb;color:#3b5fb0}
 .tools{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:6px}
 .admin-tag{font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--muted)}
 .credit{margin-top:26px;text-align:center;font-size:9px;letter-spacing:.14em;color:#b2b4b9;text-transform:none}
@@ -82,11 +90,12 @@ h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);mar
 </head>
 <body class="locked">
 <main>
-<div class="secta">unconditionalLOVE · <a href="https://unconditioallove.github.io/SECTA/" target="_blank" rel="noopener">SECTA</a></div>
+<div class="secta"><button type="button" id="upd-btn" aria-expanded="false">更新履歴</button><div id="upd-pop" hidden></div></div>
 <header><div class="brand">STUDY ROOMS</div><div class="school" id="school">校舎未設定</div></header>
 <section>
 <h1>自習室<span class="clock" id="clock"></span></h1>
-<div class="subrow"><p class="sub">今日、利用できる教室を確認</p><button type="button" id="top-btn" hidden><span id="tb-label">♡ 開発者に感謝</span><span class="dot" id="ad-dot" hidden> ●</span></button></div>
+<p class="sub">今日、利用できる教室を確認</p>
+<div id="top-row"><button type="button" id="top-btn" hidden><span id="tb-label">♡ 開発者に感謝</span><span class="dot" id="ad-dot" hidden> ●</span></button></div>
 </section>
 <section class="summary">
 <div class="summary-label" id="today-label">本日の状況</div>
@@ -129,6 +138,12 @@ function parseDate(s){
   const y=new Date().getFullYear();
   return `${y}-${pad(+m[1])}-${pad(+m[2])}`;
 }
+// 過ぎた日付は日付選択に出さない（年またぎの来年分は残す）
+function notPast(s){
+ const k=parseDate(s);if(!k)return true;
+ if(k>=todayKey())return true;
+ return new Date().getMonth()+1-(+k.slice(5,7))>=6;
+}
 function dateLabel(s){return s.replace(/[（）]/g," ").replace(/\s+/g," ").trim();}
 function hm(s){
   const m=s.match(/(\d{1,2}):(\d{2})\s*～\s*(\d{1,2}):(\d{2})/);
@@ -163,7 +178,7 @@ function render(){
  const dataset=activeData();
  if(!dataset || !Array.isArray(dataset.rooms))return;
  $("school").textContent=dataset.school||"校舎";
- const dates=[...new Set(dataset.rooms.map(r=>r.date))];
+ const dates=[...new Set(dataset.rooms.map(r=>r.date))].filter(notPast);
  const select=$("date-select");
  const old=select.value;
  select.innerHTML="";
@@ -249,6 +264,27 @@ function tick(){
  lastMin=m;
 }
 tick();setInterval(tick,1000);
+/* アップデートログ（新しいものを上に追加していく） */
+const UPDATES=[
+ {d:"2026-11-24",t:"導入",x:"アプリアイコンを設定しました"},
+ {d:"2026-11-24",t:"導入",x:"アップデートログ（この画面）を追加しました"},
+ {d:"2026-11-24",t:"導入",x:"「開発者に感謝」ボタンを1日1回までにしました（翌日にまた押せます）"},
+ {d:"2026-11-24",t:"修正",x:"過ぎた日付を日付選択に表示しないようにしました"},
+ {d:"2026-11-24",t:"修正",x:"ページを更新しなくても最新の状態に自動で切り替わるようにしました"},
+ {d:"2026-11-24",t:"修正",x:"感謝ボタンの位置を黒いフォームの真上に移しました"}
+];
+(function(){
+ const pop=$("upd-pop"),btn=$("upd-btn");let last="";
+ UPDATES.forEach(u=>{
+  if(u.d!==last){last=u.d;const [y,m,d]=u.d.split("-");const h=document.createElement("div");h.className="ud";h.textContent=`${y}年${+m}月${+d}日`;pop.append(h)}
+  const r=document.createElement("div");r.className="ui";
+  const t=document.createElement("span");t.className="ut"+(u.t==="修正"?" fix":"");t.textContent=u.t;
+  const x=document.createElement("span");x.textContent=u.x;
+  r.append(t,x);pop.append(r);
+ });
+ btn.addEventListener("click",e=>{e.stopPropagation();pop.hidden=!pop.hidden;btn.setAttribute("aria-expanded",String(!pop.hidden))});
+ document.addEventListener("click",e=>{if(!pop.hidden&&!pop.contains(e.target)){pop.hidden=true;btn.setAttribute("aria-expanded","false")}});
+})();
 /* 自動更新：ショートカットからの取り込み・復帰時・新バージョン公開時にリロード不要にする */
 window.addEventListener("hashchange",fromHash);
 function wake(){tick();fromHash();render();checkVersion()}
@@ -495,25 +531,29 @@ async function main(){
  const dayStr=()=>{const d=new Date();return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
  const topBtn=$("top-btn"),tbLabel=$("tb-label");
  const sentKey=u=>"sr_thanks_"+u.uid;
+ function syncThanks(){
+  const u=auth.currentUser;if(!u||isAdmin)return;
+  let sent=false;try{sent=localStorage.getItem(sentKey(u))===dayStr()}catch(e){}
+  tbLabel.textContent=sent?"♡ 本日は送信済み":"♡ 開発者に感謝";
+  topBtn.disabled=sent;
+ }
+ setInterval(syncThanks,30000);
  async function sendThanks(){
   const u=auth.currentUser;if(!u||topBtn.disabled)return;
   topBtn.disabled=true;
-  const day=dayStr();let label;
-  let already=false;try{already=localStorage.getItem(sentKey(u))===day}catch(e){}
-  if(already)label="今日は送信済みです";
-  else{
-   const data={uid:u.uid,day,h:u.email.split("@")[0],createdAt:serverTimestamp()};
-   try{const sid=localStorage.getItem("sr_sid_"+u.uid);if(sid&&/^\d{6}$/.test(sid))data.sid=sid}catch(e){}
-   try{
-    await Promise.race([setDoc(doc(db,"thanks",`${day}~${u.uid}`),data),new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),10000))]);
-    label="送信しました ♡";try{localStorage.setItem(sentKey(u),day)}catch(e){}
-   }catch(e){
-    const c=e&&e.code||"error";label="送信できません";
-    alert("送信できませんでした\nエラー: "+c+(c==="permission-denied"?"\n（ルール未公開、または今日すでに送信済み）":c==="timeout"?"\n（通信できません）":""));
-   }
+  const day=dayStr();let done=false;
+  const data={uid:u.uid,day,h:u.email.split("@")[0],createdAt:serverTimestamp()};
+  try{const sid=localStorage.getItem("sr_sid_"+u.uid);if(sid&&/^\d{6}$/.test(sid))data.sid=sid}catch(e){}
+  try{
+   await Promise.race([setDoc(doc(db,"thanks",`${day}~${u.uid}`),data),new Promise((_,rej)=>setTimeout(()=>rej({code:"timeout"}),10000))]);
+   done=true;tbLabel.textContent="送信しました ♡";
+  }catch(e){
+   const c=e&&e.code||"error";
+   if(c==="permission-denied"){done=true;tbLabel.textContent="本日は送信済みです"} // 同じ日の2回目は拒否される
+   else{tbLabel.textContent="送信できません";alert("送信できませんでした\nエラー: "+c+(c==="timeout"?"\n（通信できません）":""))}
   }
-  tbLabel.textContent=label;
-  setTimeout(()=>{tbLabel.textContent="♡ 開発者に感謝";topBtn.disabled=false},3000);
+  if(done){try{localStorage.setItem(sentKey(u),day)}catch(e){}}
+  setTimeout(()=>{if(done)syncThanks();else{tbLabel.textContent="♡ 開発者に感謝";topBtn.disabled=false}},2500);
  }
  topBtn.addEventListener("click",()=>{
   if(isAdmin){
@@ -571,7 +611,7 @@ async function main(){
     snap=>{allThanks=snap.docs.map(d=>d.data());mailErr="";renderMail()},
     e=>{mailErr="読み込めません（"+(e&&e.code||"error")+"）。Firestoreのルールが最新か確認してください。";renderMail()});
   }
-  tbLabel.textContent=isAdmin?"✉ メールボックス":"♡ 開発者に感謝";
+  if(isAdmin){tbLabel.textContent="✉ メールボックス";topBtn.disabled=false}else syncThanks();
   topBtn.hidden=false;
   unsub=onSnapshot(doc(db,"studyRooms","current"),
    snap=>{SR.shared=parseShared(snap);refresh()},
