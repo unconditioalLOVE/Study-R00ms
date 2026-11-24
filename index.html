@@ -95,18 +95,84 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .cbtn.pd::after{opacity:.6;inset:7px;box-shadow:0 0 0 2px #fff,0 0 0 3px var(--c)}
 .cbtn.on::after{opacity:1;inset:7px;box-shadow:0 0 0 2px #fff,0 0 0 3px var(--c)}
 .ccap{font-size:10px;color:var(--muted);flex-basis:100%;margin:0 0 0 4px;line-height:1.4}
-#test-banner{margin:14px 0 -6px;padding:8px 12px;border-radius:10px;background:#fff4d6;color:#7a5a00;font-size:11px;line-height:1.6}
+#no-data{display:none;min-height:46vh;align-items:center;justify-content:center;text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;line-height:2.1}
+main.nodata #no-data{display:flex}
+main.nodata .summary,main.nodata #next-panel,main.nodata .toolbar,main.nodata #count,main.nodata #room-list,main.nodata .notice,main.nodata #ad-mail{display:none!important}
+#test-banner{margin:14px 0 -6px;padding:8px 12px;border-radius:10px;background:#fff4d6;color:#7a5a00;font-size:11px;line-height:1.6;display:flex;justify-content:space-between;align-items:center;gap:8px}
+#test-banner button{flex:none;background:#7a5a00;color:#fff;border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700;white-space:nowrap}
+/* ---- ADMINメニュー（≡）---- */
+.hdr-r{display:flex;align-items:center;gap:9px}
+#menu-btn{width:30px;height:30px;padding:0;border-radius:9px;background:#202124;display:grid;place-items:center;flex:none}
+#menu-btn:active{opacity:.8}
+#adm-backdrop{position:fixed;inset:0;z-index:60;background:rgba(20,22,26,.4);opacity:0;transition:opacity .25s}
+#adm-backdrop.open{opacity:1}
+#admin-drawer{position:fixed;top:0;right:0;bottom:0;z-index:61;width:min(88vw,380px);background:#f5f5f7;box-shadow:-8px 0 30px rgba(0,0,0,.16);transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(18px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));border-radius:22px 0 0 22px}
+#admin-drawer.open{transform:none}
+.adm-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.adm-head strong{font-size:13px;letter-spacing:.12em;color:#777}
+.adm-close{width:32px;height:32px;border-radius:50%;background:#e8e8eb;color:#555;font-size:18px;line-height:1;padding:0}
+#admin-slot .tools{display:grid;gap:8px;margin-top:0}
+#admin-slot .tools .admin-tag{display:none}
+#admin-slot .tools button{display:flex;justify-content:space-between;align-items:center;width:100%;padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:14px;color:var(--ink);font-size:14px;font-weight:650;text-align:left}
+#admin-slot .tools button::after{content:"›";color:#b2b4b9;font-size:18px;font-weight:400}
+.tj{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.tj .tj-title{font-size:12px;font-weight:700;margin-bottom:2px}
+.tj .tj-sub{font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.adbox #tj-json{min-height:120px}
+.tj input[type=time]{border:1px solid var(--line);border-radius:9px;padding:7px 9px;font:inherit;font-size:13px;background:#fff;color:var(--ink)}
+.tj label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px}
+
+/* ---- 使い方ガイド ---- */
+.secta{display:flex;align-items:center;gap:13px}
+.secta #help-open{font-size:11px;color:#777;font-weight:650;padding:6px 0}
+#guide-modal{position:fixed;inset:0;z-index:100;background:rgba(20,22,26,.42);display:flex;align-items:flex-end;justify-content:center;padding:12px}
+.guide-sheet{width:min(100%,620px);max-height:min(88dvh,850px);overflow:auto;background:#f7f7f9;border-radius:22px 22px 16px 16px;padding:18px 18px calc(24px + env(safe-area-inset-bottom));box-shadow:0 12px 50px rgba(0,0,0,.2);overscroll-behavior:contain}
+.guide-head{display:flex;justify-content:space-between;align-items:center;position:sticky;top:-18px;margin:-18px -18px 16px;padding:17px 18px 12px;background:rgba(247,247,249,.94);backdrop-filter:blur(16px);z-index:2;border-radius:22px 22px 0 0}
+.guide-head strong{font-size:18px;letter-spacing:-.03em}
+.guide-close{width:32px;height:32px;border-radius:50%;background:#e8e8eb;color:#555;font-size:18px;line-height:1;padding:0}
+.guide-intro{font-size:12px;color:#777;line-height:1.7;margin:0 0 15px}
+.guide-section{background:#fff;border:1px solid #e8e8eb;border-radius:16px;padding:15px;margin:12px 0}
+.guide-section h3{font-size:14px;margin:0 0 10px;letter-spacing:-.02em}
+.guide-section p,.guide-section li{font-size:12px;line-height:1.75;color:#555}
+.guide-section p{margin:7px 0}
+.guide-section ol{padding-left:20px;margin:8px 0}
+.guide-section li{padding-left:2px;margin:5px 0}
+.guide-tag{font-size:9px;letter-spacing:.1em;font-weight:750;color:#85878c;margin-bottom:5px}
+.guide-priority{border:1px solid #dce6f8;background:#f5f8ff}
+.guide-priority h3{color:#244f9c}
+.guide-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;align-items:stretch;margin:12px 0}
+.guide-flow-item{background:#f4f4f6;border-radius:11px;padding:10px 6px;text-align:center;min-width:0}
+.guide-flow-item b{display:block;font-size:11px;margin:4px 0}
+.guide-flow-item span{display:block;font-size:9px;color:#777;line-height:1.5}
+.guide-symbol{height:34px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#3868bd}
+.guide-arrow{display:none}
+
+.sf-steps{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 4px 12px;margin:12px -4px 0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.sf-steps::-webkit-scrollbar{display:none}
+.sf-step{flex:none;width:172px;scroll-snap-align:start}
+.sf-step svg{width:100%;height:auto;display:block;filter:drop-shadow(0 6px 12px rgba(0,0,0,.14))}
+.sf-label{font-size:11px;font-weight:750;color:#333;margin:12px 0 3px}
+.sf-cap{font-size:10px;line-height:1.65;color:#777}
+.sf-hint{font-size:9px;color:#9a9ca1;text-align:center;margin-top:-2px}
+.guide-callout{font-size:10px!important;color:#6c6f75!important;background:#f3f3f5;border-radius:9px;padding:9px 10px;margin-top:10px!important}
+.guide-colors{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:10px 0}
+.guide-color{border-radius:9px;padding:8px 4px;text-align:center;background:#f6f6f7;font-size:9px;color:#555}
+.guide-color i{display:block;width:12px;height:12px;border-radius:50%;margin:0 auto 5px}
+.guide-link{color:#3868bd;text-decoration:underline;text-underline-offset:2px}
+@media(min-width:520px){#guide-modal{align-items:center}.guide-sheet{border-radius:22px}.guide-flow{grid-template-columns:repeat(3,1fr)}}
+
 </style>
 </head>
 <body class="locked">
 <main>
-<div class="secta"><button type="button" id="upd-btn" aria-expanded="false">更新履歴</button><div id="upd-pop" hidden></div></div>
-<header><div class="brand">STUDY ROOMS</div><div class="school" id="school">校舎未設定</div></header>
+<div class="secta"><button type="button" id="help-open" aria-haspopup="dialog">使い方</button><button type="button" id="upd-btn" aria-expanded="false">更新履歴</button><div id="upd-pop" hidden></div></div>
+<header><div class="brand">STUDY ROOMS</div><div class="hdr-r"><div class="school" id="school">校舎未設定</div><button type="button" id="menu-btn" hidden aria-label="ADMINメニュー"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg></button></div></header>
 <section>
 <h1>自習室<span class="clock" id="clock"></span></h1>
 <p class="sub">今日、利用できる教室を確認</p>
 <div id="top-row"><button type="button" id="top-btn" hidden><span id="tb-label">♡ 開発者に感謝</span><span class="dot" id="ad-dot" hidden> ●</span></button></div>
 </section>
+<div id="no-data">何も表示されてないですか？<br>無償の愛が情報を更新していません。</div>
 <section class="summary">
 <div class="summary-label" id="today-label">本日の状況</div>
 <div class="summary-main" id="summary-main">データを待っています</div>
@@ -121,11 +187,67 @@ input,textarea{-webkit-user-select:text;user-select:text}
 <div class="footer"><span id="updated">最終更新：未取得</span><button id="toggle-import">JSONを手動で読み込む</button></div>
 <section id="import"><textarea id="json-input" placeholder="ショートカットで取得したJSONを貼り付け"></textarea><button id="load-json">読み込む</button></section>
 <div class="tools"><button type="button" id="logout">ログアウト</button></div>
-<div id="admin-slot"></div>
 <div class="credit">DEVELOPED BY unconditionalLOVE</div>
 </main>
+<div id="adm-backdrop" hidden></div>
+<aside id="admin-drawer" hidden aria-label="ADMINメニュー"><div class="adm-head"><strong>ADMIN</strong><button type="button" class="adm-close" id="adm-close" aria-label="閉じる">×</button></div><div id="admin-slot"></div></aside>
+<div id="guide-modal" hidden role="dialog" aria-modal="true" aria-labelledby="guide-title">
+ <div class="guide-sheet">
+  <div class="guide-head"><strong id="guide-title">Study Rooms の使い方</strong><button type="button" class="guide-close" id="guide-close" aria-label="閉じる">×</button></div>
+  <p class="guide-intro">最初にホーム画面へ追加すると、次回からアイコンをタップしてすぐに開けます。基本操作もここで確認できます。</p>
+
+  <section class="guide-section guide-priority">
+   <h3>Safariからホーム画面に追加する</h3>
+   <p>ホーム画面に追加すると、Study Roomsをアイコンからすぐに開けます。iOS 26では「ウェブアプリとして開く」が初期状態でオンになっています。</p>
+
+   <div class="sf-steps" id="sf-steps" aria-label="iPhoneのSafariでホーム画面に追加する手順の画面イメージ"></div>
+   <div class="sf-hint">← 左右にスワイプして手順を見る →</div>
+
+   <ol>
+    <li>iPhoneのSafariでStudy Roomsを開きます。</li>
+    <li>画面右下のページメニュー「•••」をタップして「共有」を選びます。タブレイアウトが「上」「下」の場合は、共有ボタンを直接タップします。</li>
+    <li>共有シートの「その他」をタップし、「ホーム画面に追加」を選びます。見つからないときは下へスクロールします。</li>
+    <li>「ウェブアプリとして開く」がオンになっていることを確認します。通常は最初からオンです。</li>
+    <li>右上の「追加」をタップすると、ホーム画面にStudy Roomsのアイコンが追加されます。</li>
+   </ol>
+   <div class="guide-callout"><b>「ホーム画面に追加」が見つからない場合</b><br>共有メニューの一番下までスクロールし、「アクションを編集」から「ホーム画面に追加」を追加してください。</div>
+   <p><a class="guide-link" href="https://support.apple.com/ja-jp/guide/iphone/iphea86e5236/27/ios/27" target="_blank" rel="noopener">Apple公式：Safariでウェブサイトをアプリにする</a></p>
+  </section>
+
+
+  <section class="guide-section">
+   <div class="guide-tag">02 / FIND A ROOM</div><h3>自習室・利用時間を確認する</h3>
+   <p>上部の「AVAILABLE NOW」には、現在利用できる教室が表示されます。「NEXT AVAILABLE」は、次に利用可能になる教室の目安です。</p>
+   <div class="guide-flow"><div class="guide-flow-item"><div class="guide-symbol">◷</div><b>現在の状況</b><span>今使える教室</span></div><div class="guide-flow-item"><div class="guide-symbol">→</div><b>次の利用予定</b><span>次に始まる教室</span></div><div class="guide-flow-item"><div class="guide-symbol">▤</div><b>教室一覧</b><span>日付を選んで確認</span></div></div>
+   <p>「教室一覧」右側の日付メニューを切り替えると、その日の予定を確認できます。今日の予定では、利用可能・開始前の表示も確認できます。</p>
+  </section>
+
+  <section class="guide-section">
+   <div class="guide-tag">03 / CROWD STATUS</div><h3>混雑状況を評価・確認する</h3>
+   <p>現在利用時間内の教室カードをタップすると、評価用の丸が表示されます。状態に近い色を選んでください。</p>
+   <div class="guide-colors"><div class="guide-color"><i style="background:#9a9ca1"></i>灰色<br>未評価</div><div class="guide-color"><i style="background:#2fb36b"></i>緑色<br>比較的空いている</div><div class="guide-color"><i style="background:#f09a2a"></i>オレンジ<br>混んでいる</div><div class="guide-color"><i style="background:#e5484d"></i>赤色<br>利用不可</div></div>
+   <p>評価はほかのログインユーザーにも共有されます。表示時刻は、その評価が保存された時点です。評価できるのは教室の利用時間内です。</p>
+  </section>
+
+  <section class="guide-section">
+   <div class="guide-tag">04 / DATA UPDATE</div><h3>自習室情報を更新する</h3>
+   <p>河合塾のマイページで自習室情報を表示し、設定済みのショートカットを実行してデータを取り込みます。更新後、表示内容と最終更新時刻を確認してください。</p>
+   <p>ショートカットが使えない場合は、ページ下部の「JSONを手動で読み込む」から、取得済みのJSONを貼り付けて読み込むこともできます。</p>
+   <p class="guide-callout">表示内容は変更される場合があります。実際に利用する前に、校舎の掲示板などで最新情報を確認してください。</p>
+  </section>
+
+  <section class="guide-section"><h3>開発者に感謝しましょう！</h3></section>
+  <section class="guide-section">
+   <div class="guide-tag">ADMIN</div><h3>管理者専用機能</h3>
+   <p>管理者には、画面右上の「≡」からADMINメニューが開きます。JSON編集、バックアップ、共有解除、テスターモード（仮JSONの試し表示を含む）が使えます。一般ユーザーには表示されません。テスターモードのデータは自分の画面内だけで使われ、実データには保存されません。</p>
+  </section>
+  <p class="guide-intro">画面イラストは、iOS 26以降のSafari（コンパクト表示）の画面をもとにした図です。端末やタブレイアウトの設定によって、ボタンの位置や名前が少し異なる場合があります。</p>
+ </div>
+</div>
+
 <div id="login" hidden><div class="login-card">
 <div class="brand">STUDY ROOMS</div>
+<p style="margin:8px 0 18px"><button type="button" id="help-open-login" style="padding:0;font-size:12px">？ 使い方・ホーム画面への追加方法</button></p>
 <h2 id="login-title">学籍番号を入力してください</h2>
 <p>6桁の学籍番号とパスワードでログインします。別の端末でも同じ組み合わせで同じアカウントに入れます。</p>
 <form id="login-form" novalidate>
@@ -138,6 +260,111 @@ input,textarea{-webkit-user-select:text;user-select:text}
 </form></div></div>
 <script>
 const $ = id => document.getElementById(id);
+// 使い方ガイド（ログイン前・ログイン後の両方から開ける）
+// ホーム画面に追加する手順の図（iOS 26以降のSafari・コンパクト表示を模したイラスト）
+function buildSafariSteps(){
+ const host=$("sf-steps");if(!host||host.dataset.done)return;host.dataset.done="1";
+ const T=(x,y,t,o={})=>`<text x="${x}" y="${y}" font-size="${o.s||9}" font-weight="${o.w||400}" fill="${o.c||"#202124"}" text-anchor="${o.a||"start"}" ${o.ls?`letter-spacing="${o.ls}"`:""}>${t}</text>`;
+ const R=(x,y,w,h,r,f,o="")=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}" ${o}/>`;
+ const blue="#3478d4";
+ const status=(c)=>`${T(27,28,"9:41",{s:11,w:700,c})}${R(80,12,60,18,9,"#000")}
+  <g fill="${c}"><rect x="147" y="23" width="3" height="4" rx=".8"/><rect x="152" y="21" width="3" height="6" rx=".8"/><rect x="157" y="19" width="3" height="8" rx=".8"/><rect x="162" y="17" width="3" height="10" rx=".8"/></g>
+  <path d="M171 21.5a8 8 0 0 1 11 0M173.2 24a5 5 0 0 1 6.6 0" stroke="${c}" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="176.5" cy="26.6" r="1.3" fill="${c}"/>
+  <rect x="186" y="17" width="21" height="11" rx="3.4" fill="none" stroke="${c}" opacity=".45"/>${R(188,19,15,7,2,c)}`;
+ const page=`${R(5,5,210,430,34,"#f5f5f7")}
+  ${T(18,56,"STUDY ROOMS",{s:6.5,w:700,c:"#777",ls:1})}${T(202,56,"立川校",{s:7,c:"#85878c",a:"end"})}
+  ${T(18,84,"自習室",{s:22,w:700})}${T(18,100,"今日、利用できる教室を確認",{s:7.5,c:"#85878c"})}
+  ${R(14,110,192,98,14,"#202124")}${T(26,129,"AVAILABLE NOW",{s:6.5,c:"#bfc1c5"})}
+  ${T(26,150,"2階専用自習室",{s:13,w:700,c:"#fff"})}${T(26,168,"4A",{s:13,w:700,c:"#fff"})}${T(26,186,"5C",{s:13,w:700,c:"#fff"})}
+  ${T(26,201,"あと7時間55分勉強できます",{s:6.5,c:"#c5c6ca"})}
+  ${R(14,216,192,34,10,"#fff",'stroke="#e8e8eb"')}${T(24,230,"NEXT AVAILABLE",{s:5.5,w:700,c:"#85878c",ls:.6})}${T(24,243,"3A　15:10 〜 17:00",{s:8,w:600})}
+  ${R(14,260,192,46,13,"#fff",'stroke="#e8e8eb"')}${T(26,280,"2階専用自習室",{s:10,w:700})}${T(26,293,"自習室（映像講座視聴兼用）",{s:6,c:"#85878c"})}${T(194,283,"9:00 〜 21:30",{s:8,w:600,a:"end"})}
+  ${R(14,314,192,46,13,"#fff",'stroke="#e8e8eb"')}${T(26,334,"3A",{s:10,w:700})}${T(26,347,"自習室",{s:6,c:"#85878c"})}${T(194,337,"15:10 〜 17:00",{s:8,w:600,a:"end"})}`;
+ const bar=(hi)=>`
+  <circle cx="29" cy="391" r="15" fill="#fff" stroke="#dcdce0"/><path d="M31.5 384.5 25 391l6.5 6.5" stroke="#3a3a3c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  ${R(48,374,124,34,17,"#fff",'stroke="#dcdce0"')}
+  ${T(103,394,"unconditioallove.github.io",{s:6.8,c:"#202124",a:"middle"})}
+  <path d="M162 388.5a4.5 4.5 0 1 0 1.3 3.2M162.5 385v3.6h-3.6" stroke="#3a3a3c" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="197" cy="391" r="15" fill="#fff" stroke="#dcdce0"/><g fill="#3a3a3c"><circle cx="190" cy="391" r="1.7"/><circle cx="197" cy="391" r="1.7"/><circle cx="204" cy="391" r="1.7"/></g>
+  ${hi?`<circle cx="197" cy="391" r="22" fill="${blue}" opacity=".16"/><circle cx="197" cy="391" r="19" fill="none" stroke="${blue}" stroke-width="2"/>`:""}`;
+ const shareIcon=(x,y,c="#3a3a3c")=>`<g stroke="${c}" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M${x} ${y+3}v-3h8v3M${x+4} ${y+7}V${y-3}M${x+1.8} ${y-.8}L${x+4} ${y-3}l2.2 2.2" transform="translate(0 4)"/></g>`;
+ const row=(y,label,o={})=>`${o.hi?R(14,y,192,32,0,"#e9f0fd"):""}${T(26,y+20,label,{s:9.5,w:o.hi?700:400,c:o.c||"#202124"})}${o.icon||""}${o.hi?`<rect x="15" y="${y+1}" width="190" height="30" rx="4" fill="none" stroke="${blue}" stroke-width="1.8"/>`:""}`;
+ const sep=(y)=>`<path d="M26 ${y}H206" stroke="#e5e5ea" stroke-width=".8"/>`;
+ const sheetHead=(top)=>`
+  ${R(24,top+16,30,30,8,"#202124")}${T(39,top+35,"SR",{s:9,w:800,c:"#fff",a:"middle"})}
+  ${T(62,top+28,"Study Rooms",{s:9.5,w:700})}${T(62,top+39,"unconditioallove.github.io",{s:6.5,c:"#85878c"})}${T(62,top+49,"オプション ›",{s:6.5,c:blue})}
+  <circle cx="196" cy="${top+30}" r="10" fill="#e5e5ea"/><path d="M192.5 ${top+26.5}l7 7M199.5 ${top+26.5}l-7 7" stroke="#6c6c70" stroke-width="1.6" stroke-linecap="round"/>`;
+ const sheet=(top)=>`<path d="M5 ${top+30}Q5 ${top} 35 ${top}H185Q215 ${top} 215 ${top+30}V435H5Z" fill="#f2f2f7"/>`;
+ const dim=(a)=>`<rect x="5" y="5" width="210" height="430" fill="#000" opacity="${a}"/>`;
+ const svg=(i,c,body)=>`<svg viewBox="0 0 220 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true"><defs><clipPath id="sfc${i}"><rect x="5" y="5" width="210" height="430" rx="34"/></clipPath></defs>
+  <rect x="1" y="1" width="218" height="438" rx="38" fill="#1c1c1e"/><g clip-path="url(#sfc${i})">${body}${status(c)}<rect x="75" y="424" width="70" height="4" rx="2" fill="${c==="#fff"?"#fff":"#111"}"/></g></svg>`;
+ const dots=(y)=>`<g fill="#3a3a3c"><circle cx="190" cy="${y}" r="1.4"/><circle cx="196" cy="${y}" r="1.4"/><circle cx="202" cy="${y}" r="1.4"/></g>`;
+ const sq=(x,y)=>`<rect x="${x}" y="${y}" width="9" height="9" rx="2" fill="none" stroke="#3a3a3c" stroke-width="1.2"/>`;
+
+ // ① ページメニュー
+ const s1=svg(1,"#000",page+bar(true));
+ // ② 共有
+ const menuItems=["共有","ブックマークを追加","お気に入りに追加","ページ内を検索","デスクトップ用サイト"];
+ const s2=svg(2,"#000",page+dim(.1)+bar(false)+`
+  ${R(70,204,138,164,16,"#fff",'stroke="#e2e2e6"')}
+  ${menuItems.map((t,k)=>{const y=210+k*31;return `${k===0?R(76,y,126,28,9,"#e9f0fd"):""}${k===0?`<rect x="76.5" y="${y+.5}" width="125" height="27" rx="8.5" fill="none" stroke="${blue}" stroke-width="1.6"/>`:""}${T(86,y+18,t,{s:9,w:k===0?700:400})}${k===0?shareIcon(184,y+9,blue):k===1?`<path d="M186 ${y+10}h12v10l-6-3-6 3z" fill="none" stroke="#3a3a3c" stroke-width="1.2" stroke-linejoin="round"/>`:k===2?`<path d="M192 ${y+9}l1.7 3.6 3.9.5-2.9 2.7.8 3.9-3.5-2-3.5 2 .8-3.9-2.9-2.7 3.9-.5z" fill="none" stroke="#3a3a3c" stroke-width="1.1" stroke-linejoin="round"/>`:k===3?`<circle cx="191" cy="${y+13}" r="4.2" fill="none" stroke="#3a3a3c" stroke-width="1.3"/><path d="M194 ${y+16}l3.4 3.4" stroke="#3a3a3c" stroke-width="1.3" stroke-linecap="round"/>`:`<rect x="186" y="${y+9}" width="13" height="9" rx="1.6" fill="none" stroke="#3a3a3c" stroke-width="1.2"/>`}`}).join("")}`);
+ // ③ その他
+ const apps=[["AirDrop","#3b9cf5"],["メッセージ","#34c759"],["メール","#2f7cf6"],["メモ","#ffcc00"]];
+ const s3=svg(3,"#000",page+dim(.32)+sheet(92)+sheetHead(92)+`
+  ${apps.map((a,k)=>`${R(20+k*48,152,34,34,9,a[1])}${T(37+k*48,198,a[0],{s:6,a:"middle",c:"#3a3a3c"})}`).join("")}
+  ${R(14,212,192,132,13,"#fff")}
+  ${row(212,"コピー",{icon:sq(186,224)})}${sep(244)}${row(244,"リーディングリストに追加")}${sep(276)}${row(276,"ブックマークを追加")}${sep(308)}
+  ${row(308,"その他",{hi:1,c:blue,icon:`<circle cx="196" cy="324" r="8" fill="#e5e5ea"/><g fill="#3a3a3c"><circle cx="192.5" cy="324" r="1.2"/><circle cx="196" cy="324" r="1.2"/><circle cx="199.5" cy="324" r="1.2"/></g>`})}`);
+ // ④ ホーム画面に追加
+ const s4=svg(4,"#000",page+dim(.32)+sheet(48)+sheetHead(48)+`
+  ${R(14,114,192,160,13,"#fff")}
+  ${row(114,"リーディングリストに追加")}${sep(146)}${row(146,"ブックマークを追加")}${sep(178)}${row(178,"お気に入りに追加")}${sep(210)}
+  ${row(210,"ホーム画面に追加",{hi:1,icon:`<rect x="185" y="219" width="12" height="12" rx="3" fill="none" stroke="${blue}" stroke-width="1.4"/><path d="M191 222v6M188 225h6" stroke="${blue}" stroke-width="1.4" stroke-linecap="round"/>`})}${sep(242)}${row(242,"ページ内を検索")}
+  ${R(14,284,192,64,13,"#fff")}${row(284,"プリント")}${sep(316)}${T(26,336,"アクションを編集…",{s:9.5,c:blue})}`);
+ // ⑤ 追加
+ const s5=svg(5,"#000",page+dim(.32)+`<path d="M5 94Q5 64 35 64H185Q215 64 215 94V435H5Z" fill="#f2f2f7"/>
+  ${T(22,92,"キャンセル",{s:9.5,c:blue})}${T(118,92,"ホーム画面に追加",{s:9,w:700,a:"middle"})}
+  ${R(168,76,38,22,11,"#fff")}${T(187,91,"追加",{s:9.5,w:700,c:blue,a:"middle"})}<rect x="167" y="75" width="40" height="24" rx="12" fill="none" stroke="${blue}" stroke-width="1.8"/>
+  ${R(14,112,192,86,14,"#fff")}${R(26,126,50,50,12,"#202124")}${T(51,157,"SR",{s:14,w:800,c:"#fff",a:"middle"})}
+  ${T(86,142,"Study Rooms",{s:10,w:700})}<path d="M86 150H196" stroke="#e5e5ea"/>${T(86,164,"unconditioallove.github.io",{s:7,c:"#85878c"})}
+  ${T(26,190,"ホーム画面から開いたとき、アプリのように表示します",{s:5.8,c:"#85878c"})}
+  ${R(14,212,192,44,13,"#fff")}${T(26,238,"ウェブアプリとして開く",{s:9.5})}${R(160,225,38,22,11,"#34c759")}<circle cx="187" cy="236" r="9" fill="#fff"/>
+  <rect x="13" y="211" width="194" height="46" rx="14" fill="none" stroke="${blue}" stroke-width="1.8"/>`);
+ // ⑥ 完成
+ const cols=["#ff9f0a","#30b0c7","#ff453a","#5e5ce6","#34c759","#ff375f","#64d2ff","#bf5af2","#ffd60a","#0a84ff","#ac8e68","#66d4cf"];
+ let grid="";
+ for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+  const k=r*4+c,x=22+c*48,y=62+r*72;
+  if(r===1&&c===2){grid+=`<circle cx="${x+19}" cy="${y+19}" r="30" fill="#fff" opacity=".22"/>${R(x,y,38,38,9,"#202124")}${T(x+19,y+24,"SR",{s:12,w:800,c:"#fff",a:"middle"})}${T(x+19,y+52,"Study Rooms",{s:6.8,c:"#fff",w:600,a:"middle"})}`;continue}
+  grid+=`${R(x,y,38,38,9,cols[k%cols.length],'opacity=".88"')}${R(x+7,y+46,24,4,2,"#fff",'opacity=".75"')}`;
+ }
+ const s6=svg(6,"#fff",`<defs><linearGradient id="sfw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7aa7e8"/><stop offset=".55" stop-color="#b79be6"/><stop offset="1" stop-color="#f0a8c8"/></linearGradient></defs>
+  ${R(5,5,210,430,34,"url(#sfw)")}${grid}
+  ${R(14,366,192,54,22,"#fff",'opacity=".28"')}${[0,1,2,3].map(c=>R(26+c*47,374,38,38,9,cols[(c*3+2)%cols.length],'opacity=".9"')).join("")}`);
+ const caps=[
+  ["① ページメニュー「•••」","Safariで Study Rooms を開き、画面右下の「•••」をタップします。"],
+  ["② 共有","メニューの「共有」をタップします。タブレイアウトが「上」「下」なら、共有ボタンを直接タップします。"],
+  ["③ その他","共有シートの「その他」をタップします。"],
+  ["④ ホーム画面に追加","一覧から「ホーム画面に追加」をタップします。見つからないときは下へスクロールします。"],
+  ["⑤ 追加","「ウェブアプリとして開く」がオンなのを確認し、右上の「追加」をタップします。"],
+  ["⑥ 完成","ホーム画面にアイコンが追加されます。次回からここから開けます。"]
+ ];
+ [s1,s2,s3,s4,s5,s6].forEach((v,i)=>{
+  const d=document.createElement("div");d.className="sf-step";
+  d.innerHTML=v+`<div class="sf-label"></div><div class="sf-cap"></div>`;
+  d.querySelector(".sf-label").textContent=caps[i][0];d.querySelector(".sf-cap").textContent=caps[i][1];
+  host.append(d);
+ });
+}
+(function setupGuide(){
+ const modal=$("guide-modal");if(!modal)return;
+ const open=()=>{buildSafariSteps();modal.hidden=false;document.body.style.overflow="hidden";$("guide-close").focus()};
+ const close=()=>{modal.hidden=true;document.body.style.overflow=""};
+ ["help-open","help-open-login"].forEach(id=>{const b=$(id);if(b)b.addEventListener("click",open)});
+ $("guide-close").addEventListener("click",close);
+ modal.addEventListener("click",e=>{if(e.target===modal)close()});
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.hidden)close()});
+})();
 let dataset = null;
 const SR=window.SR={shared:null,test:null,legacy:()=>dataset};
 function activeData(){return SR.test?SR.test.data:(SR.shared||dataset)}
@@ -159,7 +386,7 @@ function hm(s){
   const m=s.match(/(\d{1,2}):(\d{2})\s*～\s*(\d{1,2}):(\d{2})/);
   return m?{start:+m[1]*60 + +m[2],end:+m[3]*60 + +m[4]}:null;
 }
-function nowMinutes(){if(SR.test)return SR.test.now;const d=new Date();return d.getHours()*60+d.getMinutes()}
+function nowMinutes(){if(SR.test&&SR.test.now!=null)return SR.test.now;const d=new Date();return d.getHours()*60+d.getMinutes()}
 function todayKey(){
  const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
@@ -196,11 +423,14 @@ function renderSummary(active,now,hasUpcoming){
  const rem=Math.max(...active.map(r=>r._time.end))-now;
  det.textContent=`あと${rem>=60?Math.floor(rem/60)+"時間":""}${rem%60?rem%60+"分":""}勉強できます`;
 }
+function setEmpty(on){document.querySelector("main").classList.toggle("nodata",!!on)}
 function render(){
  const dataset=activeData();
- if(!dataset || !Array.isArray(dataset.rooms))return;
+ if(!dataset || !Array.isArray(dataset.rooms)){setEmpty(SR.ready!==false);return}
  $("school").textContent=dataset.school||"校舎";
  const dates=[...new Set(dataset.rooms.map(r=>r.date))].filter(notPast);
+ if(!dates.length){setEmpty(SR.ready!==false);return}
+ setEmpty(false);
  const select=$("date-select");
  const old=select.value;
  select.innerHTML="";
@@ -309,6 +539,9 @@ function tick(){
 tick();setInterval(tick,1000);
 /* アップデートログ（新しいものを上に追加していく） */
 const UPDATES=[
+ {d:"2026-11-24",t:"導入",x:"情報が更新されていないときの案内メッセージを追加しました"},
+ {d:"2026-11-24",t:"導入",x:"管理者メニュー（右上の≡）と、仮JSONの試し表示（自分の画面だけ）を追加しました"},
+ {d:"2026-11-24",t:"修正",x:"使い方の「ホーム画面に追加」の図を、最新のSafariの画面に合わせて作り直しました"},
  {d:"2026-11-24",t:"修正",x:"評価ボタンは、教室一覧のクラスをタップしたときだけ表示するようにしました"},
  {d:"2026-11-24",t:"修正",x:"画面を押しても文字が選択されないようにしました"},
  {d:"2026-11-24",t:"導入",x:"過ぎた日の混雑評価を自動で整理するようにしました"},
@@ -439,7 +672,7 @@ async function main(){
 
  /* ---- 表示切替 ---- */
  function refresh(){
-  if(!activeData()){if(rendered)location.reload();return}
+  if(!activeData()){if(rendered)location.reload();else render();return}
   rendered=true;render();
  }
  function parseShared(snap){
@@ -463,7 +696,14 @@ async function main(){
   let b=$("test-banner");
   if(!t){if(b)b.remove();return}
   if(!b){b=document.createElement("div");b.id="test-banner";document.querySelector(".summary").before(b)}
-  b.textContent=`TESTER MODE ／ パターン${t.n} ／ 仮想時刻 12:00 ／ 実データは変更されていません`;
+  b.innerHTML="";
+  const sp=document.createElement("span");
+  const label=typeof t.n==="number"?`パターン${t.n}`:t.n;
+  const clock=t.now==null?"現在時刻":`仮想時刻 ${pad(Math.floor(t.now/60))}:${pad(t.now%60)}`;
+  sp.textContent=`TESTER MODE ／ ${label} ／ ${clock} ／ 自分の画面だけ・実データは変更されません`;
+  const bt=document.createElement("button");bt.type="button";bt.textContent="実データに戻す";
+  bt.onclick=()=>{endTest();const p=$("ad-tester");if(p)p.hidden=true};
+  b.append(sp,bt);
  }
  function endTest(quiet){
   if(!SR.test)return;
@@ -472,7 +712,7 @@ async function main(){
  }
  function applyTest(n){
   if(!isAdmin||!testerOK)return;
-  SR.test=makeTest(n);banner(SR.test);render();
+  SR.test=makeTest(n);banner(SR.test);render();closeDrawer();
  }
 
  /* ---- 管理者UI（管理者ログイン時のみDOMを生成）---- */
@@ -510,6 +750,13 @@ async function main(){
 </section>
 <section class="adbox" id="ad-tester" hidden>
 <div class="col"><button type="button" class="tp" data-p="1">1. 3室が利用可能</button><button type="button" class="tp" data-p="2">2. 1室のみ利用可能</button><button type="button" class="tp" data-p="3">3. 利用可能なし・次の利用予定あり</button><button type="button" class="tp" data-p="4">4. 本日利用可能なし・次の利用予定なし</button></div>
+<div class="tj">
+<div class="tj-title">仮JSON（自分の画面だけ）</div>
+<div class="tj-sub">ショートカットで取得したJSONや、JSON編集の内容を貼り付けると、公開前にどう見えるか確認できます。ほかのユーザーの画面や実データは変わりません。</div>
+<textarea id="tj-json" spellcheck="false" placeholder="JSONを貼り付け"></textarea>
+<div class="row"><label>仮想時刻（空欄で現在時刻）<input type="time" id="tj-time"></label></div>
+<div class="row"><button type="button" class="pri" id="tj-apply">仮表示する</button><button type="button" id="tj-from-editor">JSON編集欄から読込</button></div>
+</div>
 <div class="row"><button type="button" class="pri" id="ad-real">実データに戻す</button></div>
 <div class="msg" id="ad-tmsg"></div>
 </section>
@@ -568,9 +815,35 @@ async function main(){
    catch(e){testerOK=false;$("ad-tmsg").textContent="サーバーで管理者権限を確認できませんでした";p.hidden=false}
   };
   document.querySelectorAll("#ad-tester .tp").forEach(b=>b.onclick=()=>applyTest(+b.dataset.p));
-  $("ad-real").onclick=()=>{endTest();$("ad-tester").hidden=true};
+  $("ad-real").onclick=()=>{endTest();$("ad-tester").hidden=true;$("ad-tmsg").textContent=""};
+  $("tj-from-editor").onclick=()=>{$("tj-json").value=$("ad-json").value||JSON.stringify(real()||{school:"",rooms:[]},null,2)};
+  $("tj-apply").onclick=()=>{
+   if(!isAdmin||!testerOK)return;
+   const r=validate($("tj-json").value);
+   if(r.err){$("ad-tmsg").textContent="仮表示できません:\n"+r.err.join("\n");return}
+   const tv=$("tj-time").value;let now=null;
+   if(tv){const [h,m]=tv.split(":");now=+h*60+ +m}
+   SR.test={n:"仮JSON",now,data:r.ok};
+   banner(SR.test);render();closeDrawer();
+  };
  }
- function teardownAdmin(){endTest(true);testerOK=false;$("admin-slot").innerHTML=""}
+ function teardownAdmin(){endTest(true);testerOK=false;$("admin-slot").innerHTML="";closeDrawer(true)}
+ /* ---- ADMINメニュー（右からスライド）---- */
+ const menuBtn=$("menu-btn"),drawer=$("admin-drawer"),backdrop=$("adm-backdrop");
+ function openDrawer(){
+  if(!isAdmin)return;
+  backdrop.hidden=false;drawer.hidden=false;document.body.style.overflow="hidden";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{backdrop.classList.add("open");drawer.classList.add("open")}));
+ }
+ function closeDrawer(instant){
+  backdrop.classList.remove("open");drawer.classList.remove("open");document.body.style.overflow="";
+  const hide=()=>{if(!drawer.classList.contains("open")){backdrop.hidden=true;drawer.hidden=true}};
+  if(instant)hide();else setTimeout(hide,300);
+ }
+ menuBtn.addEventListener("click",openDrawer);
+ backdrop.addEventListener("click",()=>closeDrawer());
+ $("adm-close").addEventListener("click",()=>closeDrawer());
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!drawer.hidden)closeDrawer()});
 
  /* ---- 開発者に感謝する（一般ユーザー → 管理者のメールボックス）---- */
  const tsMs=x=>x&&x.toMillis?x.toMillis():Date.now();
@@ -642,7 +915,7 @@ async function main(){
   if(unsub){unsub();unsub=null}
   if(unsubAdm){unsubAdm();unsubAdm=null}
   allThanks=[];mailErr="";disableCrowd();
-  topBtn.hidden=true;
+  topBtn.hidden=true;menuBtn.hidden=true;
  }
 
  /* ---- 混雑状況（匿名・全ユーザー共有）：UID等は保存しない ---- */
@@ -718,11 +991,14 @@ async function main(){
   }
   enableCrowd();
   if(isAdmin)purgeCrowd();
+  menuBtn.hidden=!isAdmin;
   if(isAdmin){tbLabel.textContent="✉ メールボックス";topBtn.disabled=false}else syncThanks();
   topBtn.hidden=false;
+  SR.ready=false;   // 最初の共有データが届くまでは「未更新」メッセージを出さない
+  setTimeout(()=>{if(SR.ready===false){SR.ready=true;refresh()}},5000);
   unsub=onSnapshot(doc(db,"studyRooms","current"),
-   snap=>{SR.shared=parseShared(snap);refresh()},
-   ()=>{SR.shared=null;refresh()});
+   snap=>{SR.shared=parseShared(snap);SR.ready=true;refresh()},
+   ()=>{SR.shared=null;SR.ready=true;refresh()});
   refresh();
  });
 }
