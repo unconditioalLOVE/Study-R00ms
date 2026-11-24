@@ -664,6 +664,8 @@ async function main(){
    const email=await idToEmail(id);
    const cred=mode==="register"?await m.createUserWithEmailAndPassword(auth,email,pw):await m.signInWithEmailAndPassword(auth,email,pw);
    try{localStorage.setItem("sr_sid_"+cred.user.uid,id)}catch(e){}
+   // 管理者確認用：学籍番号を記録（登録時・ログイン時の両方で上書き保存）
+   try{await setDoc(doc(db,"users",cred.user.uid),{sid:id,updatedAt:serverTimestamp()},{merge:true})}catch(e){}
    $("pw").value="";$("pw2").value="";$("sid").value="";
   }catch(e){setMsg(authErr(e))}
   finally{btn.disabled=false}
@@ -740,7 +742,11 @@ async function main(){
  }
  function buildAdmin(){
   $("admin-slot").innerHTML=`
-<div class="tools"><span class="admin-tag">ADMIN</span><button type="button" id="ad-edit">JSON編集</button><button type="button" id="ad-test">TESTER MODE</button></div>
+<div class="tools"><span class="admin-tag">ADMIN</span><button type="button" id="ad-edit">JSON編集</button><button type="button" id="ad-test">TESTER MODE</button><button type="button" id="ad-users">ユーザー一覧</button></div>
+<section class="adbox" id="ad-users-box" hidden>
+<div class="msg" id="ad-users-msg"></div>
+<div id="ad-users-list"></div>
+</section>
 <section class="adbox" id="ad-editor" hidden>
 <textarea id="ad-json" spellcheck="false"></textarea>
 <div class="row"><button type="button" class="pri" id="ad-save">検証して保存</button><button type="button" id="ad-check">検証のみ</button><button type="button" id="ad-reload">現在のデータを読込</button></div>
@@ -796,6 +802,7 @@ async function main(){
     if(prev)w.set(doc(collection(db,"backups")),{json:JSON.stringify(prev),savedAt:serverTimestamp(),by:auth.currentUser.uid});
     w.set(doc(db,"studyRooms","current"),{json:JSON.stringify(next),updatedAt:serverTimestamp(),updatedBy:auth.currentUser.uid});
     await w.commit();msg("保存しました。全ユーザーに反映されます。");loadBackups();
+    setTimeout(()=>{purgeBackups().then(loadBackups)},3000); // サーバー時刻の確定を待ってから古いバックアップを整理
    }catch(e){msg("保存に失敗しました。既存データは変更されていません。\n"+fsErr(e))}
   };
   $("ad-unshare").onclick=async()=>{
@@ -813,6 +820,24 @@ async function main(){
    if(!p.hidden){p.hidden=true;return}
    try{await getDoc(doc(db,"admin","probe"));testerOK=true;p.hidden=false;$("ad-tmsg").textContent="テストデータはこの画面内だけで使われ、保存・共有されません。"}
    catch(e){testerOK=false;$("ad-tmsg").textContent="サーバーで管理者権限を確認できませんでした";p.hidden=false}
+  };
+  $("ad-users").onclick=async()=>{
+   const box=$("ad-users-box");
+   if(!box.hidden){box.hidden=true;return}
+   box.hidden=false;$("ad-users-msg").textContent="読み込み中…";$("ad-users-list").innerHTML="";
+   try{
+    const s=await getDocs(query(collection(db,"users"),orderBy("updatedAt","desc"),limit(500)));
+    $("ad-users-msg").textContent=`登録ユーザー ${s.size}件`;
+    const list=$("ad-users-list");
+    s.forEach(d=>{
+     const x=d.data();
+     const row=document.createElement("div");row.className="ml-row";
+     const a=document.createElement("div");a.textContent=`学籍番号 ${x.sid||"不明"}（UID: ${d.id.slice(0,6)}…）`;
+     const c=document.createElement("div");c.className="ml-sub";
+     c.textContent=`最終ログイン：${x.updatedAt&&x.updatedAt.toDate?x.updatedAt.toDate().toLocaleString("ja-JP"):"不明"}`;
+     row.append(a,c);list.append(row);
+    });
+   }catch(e){$("ad-users-msg").textContent="読み込めません（"+(e&&e.code||"error")+"）。Firestoreのルールでusersコレクションの読み取りを管理者に許可しているか確認してください。"}
   };
   document.querySelectorAll("#ad-tester .tp").forEach(b=>b.onclick=()=>applyTest(+b.dataset.p));
   $("ad-real").onclick=()=>{endTest();$("ad-tester").hidden=true;$("ad-tmsg").textContent=""};
@@ -975,6 +1000,16 @@ async function main(){
    const w=writeBatch(db);q.docs.slice(0,400).forEach(d=>w.delete(d.ref));await w.commit();
   }catch(e){}
  }
+ // 管理者がログインしたとき、古いバックアップを自動整理（直近KEEP件だけ残す）
+ const BACKUP_KEEP=3;
+ async function purgeBackups(){
+  try{
+   const s=await getDocs(query(collection(db,"backups"),orderBy("savedAt","desc")));
+   if(s.size<=BACKUP_KEEP)return;
+   const old=s.docs.slice(BACKUP_KEEP);
+   const w=writeBatch(db);old.slice(0,400).forEach(d=>w.delete(d.ref));await w.commit();
+  }catch(e){}
+ }
 
  /* ---- ログイン状態 ---- */
  m.onAuthStateChanged(auth,user=>{
@@ -990,7 +1025,7 @@ async function main(){
     e=>{mailErr="読み込めません（"+(e&&e.code||"error")+"）。Firestoreのルールが最新か確認してください。";renderMail()});
   }
   enableCrowd();
-  if(isAdmin)purgeCrowd();
+  if(isAdmin){purgeCrowd();purgeBackups()}
   menuBtn.hidden=!isAdmin;
   if(isAdmin){tbLabel.textContent="✉ メールボックス";topBtn.disabled=false}else syncThanks();
   topBtn.hidden=false;
