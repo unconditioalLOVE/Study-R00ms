@@ -40,6 +40,13 @@ button{border:0;background:transparent;color:var(--blue);font:inherit;font-size:
 #import button{background:#202124;color:white;border-radius:9px;padding:10px 14px;margin-top:8px}
 @media(min-width:600px){main{padding-top:42px}.summary{padding:22px 24px}}
 [hidden]{display:none!important}
+.summary{position:relative}
+#top-btn{position:absolute;top:13px;right:13px;display:flex;align-items:center;gap:2px;background:#fff;color:#202124;border-radius:999px;padding:8px 14px;font-size:12px;font-weight:700;letter-spacing:0;line-height:1;box-shadow:0 1px 0 rgba(255,255,255,.2)}
+#top-btn:active{opacity:.8}
+#top-btn[disabled]{opacity:.7}
+#top-btn .dot{color:#d4553a;font-size:10px}
+#ad-mail{margin:-6px 0 18px}
+.ml-err{color:#b3402a}
 main{position:relative}
 body.locked main{display:none}
 h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);margin-left:9px;font-variant-numeric:tabular-nums;vertical-align:middle}
@@ -81,10 +88,12 @@ h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);mar
 <p class="sub">今日、利用できる教室を確認</p>
 </section>
 <section class="summary">
+<button type="button" id="top-btn" hidden><span id="tb-label">♡ 開発者に感謝</span><span class="dot" id="ad-dot" hidden> ●</span></button>
 <div class="summary-label" id="today-label">本日の状況</div>
 <div class="summary-main" id="summary-main">データを待っています</div>
 <div class="summary-detail" id="summary-detail">河合塾のページからショートカットでデータを取り込んでください。</div>
 </section>
+<section class="adbox" id="ad-mail" hidden><div id="ml-list"></div></section>
 <section class="next-panel" id="next-panel"><div class="next-label">NEXT AVAILABLE</div><div class="next-name" id="next-name">—</div><div class="next-time" id="next-time">次の利用予定はありません</div></section>
 <div class="toolbar"><h2>教室一覧</h2><select class="date-select" id="date-select" aria-label="日付"></select></div>
 <p class="count" id="count"></p>
@@ -92,7 +101,7 @@ h1 .clock{font-size:11px;font-weight:500;letter-spacing:0;color:var(--muted);mar
 <div class="notice">自習室は変更になる場合があります。利用前に校舎の掲示板で最新情報を確認してください。満席の場合は入室できないことがあります。</div>
 <div class="footer"><span id="updated">最終更新：未取得</span><button id="toggle-import">JSONを手動で読み込む</button></div>
 <section id="import"><textarea id="json-input" placeholder="ショートカットで取得したJSONを貼り付け"></textarea><button id="load-json">読み込む</button></section>
-<div class="tools"><button type="button" id="logout">ログアウト</button><button type="button" id="thanks-btn" hidden>開発者に感謝する</button></div>
+<div class="tools"><button type="button" id="logout">ログアウト</button></div>
 <div id="admin-slot"></div>
 <div class="credit">DEVELOPED BY unconditionalLOVE</div>
 </main>
@@ -380,7 +389,7 @@ async function main(){
  }
  function buildAdmin(){
   $("admin-slot").innerHTML=`
-<div class="tools"><span class="admin-tag">ADMIN</span><button type="button" id="ad-edit">JSON編集</button><button type="button" id="ad-test">TESTER MODE</button><button type="button" id="ad-mail-btn">メールボックス<span class="dot" id="ad-dot" hidden> ●</span></button></div>
+<div class="tools"><span class="admin-tag">ADMIN</span><button type="button" id="ad-edit">JSON編集</button><button type="button" id="ad-test">TESTER MODE</button></div>
 <section class="adbox" id="ad-editor" hidden>
 <textarea id="ad-json" spellcheck="false"></textarea>
 <div class="row"><button type="button" class="pri" id="ad-save">検証して保存</button><button type="button" id="ad-check">検証のみ</button><button type="button" id="ad-reload">現在のデータを読込</button></div>
@@ -393,7 +402,7 @@ async function main(){
 <div class="row"><button type="button" class="pri" id="ad-real">実データに戻す</button></div>
 <div class="msg" id="ad-tmsg"></div>
 </section>
-<section class="adbox" id="ad-mail" hidden><div id="ml-list"></div></section>`;
+`;
   const msg=t=>{$("ad-msg").textContent=t||""};
   const real=()=>SR.shared||SR.legacy();
   const load=()=>{$("ad-json").value=JSON.stringify(real()||{school:"",rooms:[]},null,2)};
@@ -449,11 +458,6 @@ async function main(){
   };
   document.querySelectorAll("#ad-tester .tp").forEach(b=>b.onclick=()=>applyTest(+b.dataset.p));
   $("ad-real").onclick=()=>{endTest();$("ad-tester").hidden=true};
-  $("ad-mail-btn").onclick=()=>{
-   const p=$("ad-mail");p.hidden=!p.hidden;
-   if(p.hidden){seenAt=Date.now();try{localStorage.setItem("sr_adm_seen",seenAt)}catch(e){}}
-   renderMail();
-  };
  }
  function teardownAdmin(){endTest(true);testerOK=false;$("admin-slot").innerHTML=""}
 
@@ -461,21 +465,33 @@ async function main(){
  const tsMs=x=>x&&x.toMillis?x.toMillis():Date.now();
  const fmtTs=ms=>new Date(ms).toLocaleString("ja-JP",{year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});
  const dayStr=()=>{const d=new Date();return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
- const thanksBtn=$("thanks-btn");
- thanksBtn.addEventListener("click",async()=>{
-  const u=auth.currentUser;if(!u||thanksBtn.disabled)return;
-  thanksBtn.disabled=true;
-  const day=dayStr(),data={uid:u.uid,day,h:u.email.split("@")[0],createdAt:serverTimestamp()};
-  try{const sid=localStorage.getItem("sr_sid_"+u.uid);if(sid&&/^\d{6}$/.test(sid))data.sid=sid}catch(e){}
-  let label;
-  try{await setDoc(doc(db,"thanks",`${day}~${u.uid}`),data);label="ありがとうございます！"}
-  catch(e){label=e&&e.code==="permission-denied"?"今日はすでに送信済みです":"送信できませんでした"}
-  thanksBtn.textContent=label;
-  setTimeout(()=>{thanksBtn.textContent="開発者に感謝する";thanksBtn.disabled=false},3000);
+ const topBtn=$("top-btn"),tbLabel=$("tb-label");
+ const sentKey=u=>"sr_thanks_"+u.uid;
+ async function sendThanks(){
+  const u=auth.currentUser;if(!u||topBtn.disabled)return;
+  topBtn.disabled=true;
+  const day=dayStr();let label;
+  let already=false;try{already=localStorage.getItem(sentKey(u))===day}catch(e){}
+  if(already)label="今日は送信済みです";
+  else{
+   const data={uid:u.uid,day,h:u.email.split("@")[0],createdAt:serverTimestamp()};
+   try{const sid=localStorage.getItem("sr_sid_"+u.uid);if(sid&&/^\d{6}$/.test(sid))data.sid=sid}catch(e){}
+   try{await setDoc(doc(db,"thanks",`${day}~${u.uid}`),data);label="送信しました ♡";try{localStorage.setItem(sentKey(u),day)}catch(e){}}
+   catch(e){label=e&&e.code==="permission-denied"?"送信できません（送信済みの可能性）":"送信できませんでした"}
+  }
+  tbLabel.textContent=label;
+  setTimeout(()=>{tbLabel.textContent="♡ 開発者に感謝";topBtn.disabled=false},3000);
+ }
+ topBtn.addEventListener("click",()=>{
+  if(isAdmin){
+   const p=$("ad-mail");p.hidden=!p.hidden;
+   if(p.hidden){seenAt=Date.now();try{localStorage.setItem("sr_adm_seen",seenAt)}catch(e){}}
+   renderMail();
+  }else sendThanks();
  });
 
  /* ---- 管理者メールボックス ---- */
- let unsubAdm=null,allThanks=[],seenAt=0;
+ let unsubAdm=null,allThanks=[],seenAt=0,mailErr="";
  try{seenAt=+localStorage.getItem("sr_adm_seen")||0}catch(e){}
  const verified=new Map();
  function verifySid(sid,h){
@@ -491,7 +507,7 @@ async function main(){
   if(!open)return;
   const list=$("ml-list");list.innerHTML="";
   const head=document.createElement("div");head.className="msg";head.style.marginTop="0";
-  head.textContent=`感謝 ${allThanks.length}件${newer?`（新着 ${newer}件）`:""}`;list.append(head);
+  head.textContent=mailErr||`感謝 ${allThanks.length}件${newer?`（新着 ${newer}件）`:""}`;if(mailErr)head.className+=" ml-err";list.append(head);
   allThanks.forEach(x=>{
    const row=document.createElement("div");row.className="ml-row";
    const a=document.createElement("div");
@@ -505,8 +521,8 @@ async function main(){
  function stopAll(){
   if(unsub){unsub();unsub=null}
   if(unsubAdm){unsubAdm();unsubAdm=null}
-  allThanks=[];
-  thanksBtn.hidden=true;
+  allThanks=[];mailErr="";
+  topBtn.hidden=true;
  }
 
  /* ---- ログイン状態 ---- */
@@ -519,8 +535,11 @@ async function main(){
   if(isAdmin){
    buildAdmin();
    unsubAdm=onSnapshot(query(collection(db,"thanks"),orderBy("createdAt","desc"),limit(300)),
-    snap=>{allThanks=snap.docs.map(d=>d.data());renderMail()},()=>{});
-  }else{thanksBtn.hidden=false}
+    snap=>{allThanks=snap.docs.map(d=>d.data());mailErr="";renderMail()},
+    e=>{mailErr="読み込めません。Firestoreのルールが最新か確認してください。";renderMail()});
+  }
+  tbLabel.textContent=isAdmin?"✉ メールボックス":"♡ 開発者に感謝";
+  topBtn.hidden=false;
   unsub=onSnapshot(doc(db,"studyRooms","current"),
    snap=>{SR.shared=parseShared(snap);refresh()},
    ()=>{SR.shared=null;refresh()});
