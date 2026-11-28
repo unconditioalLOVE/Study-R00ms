@@ -161,13 +161,29 @@ main.nodata .summary,main.nodata #next-panel,main.nodata .toolbar,main.nodata #c
 .guide-link{color:#3868bd;text-decoration:underline;text-underline-offset:2px}
 @media(min-width:520px){#guide-modal{align-items:center}.guide-sheet{border-radius:22px}.guide-flow{grid-template-columns:repeat(3,1fr)}}
 
+/* ---- 通知 ---- */
+#hero{position:relative}
+#notif-btn{position:absolute;top:0;right:0;display:flex;align-items:center;gap:5px;padding:8px 12px 8px 10px;border-radius:999px;background:#fff;border:1px solid var(--line);color:#666;font-size:11px;font-weight:700;line-height:1;white-space:nowrap}
+#notif-btn svg{width:14px;height:14px;flex:none}
+#notif-btn:active{opacity:.8}
+#notif-btn.on{background:var(--green-bg);border-color:#bfe3d0;color:var(--green)}
+#nf-modal{position:fixed;inset:0;z-index:120;background:rgba(20,22,26,.42);display:flex;align-items:center;justify-content:center;padding:24px}
+.nf-card{width:min(100%,320px);background:#fff;border-radius:20px;padding:22px 20px 16px;text-align:center;box-shadow:0 12px 50px rgba(0,0,0,.2)}
+.nf-title{font-size:16px;font-weight:700;letter-spacing:-.02em;margin:0 0 8px;color:var(--ink)}
+.nf-text{font-size:12px;color:#777;line-height:1.8;margin:0 0 16px}
+.nf-row{display:flex;gap:8px}
+.nf-row button{flex:1;padding:12px;border-radius:12px;font-size:14px;font-weight:650}
+#nf-no{background:#f0f0f2;color:#555}
+#nf-yes{background:#202124;color:#fff}
+#nf-toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:130;background:#202124;color:#fff;font-size:12px;line-height:1.6;padding:11px 16px;border-radius:16px;max-width:90vw;text-align:center;white-space:pre-line;box-shadow:0 6px 20px rgba(0,0,0,.2)}
 </style>
 </head>
 <body class="locked">
 <main>
 <div class="secta"><button type="button" id="help-open" aria-haspopup="dialog">使い方</button><button type="button" id="upd-btn" aria-expanded="false">更新履歴</button><div id="upd-pop" hidden></div></div>
 <header><div class="brand">STUDY ROOMS</div><div class="hdr-r"><div class="school" id="school">校舎未設定</div><button type="button" id="menu-btn" hidden aria-label="ADMINメニュー"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg></button></div></header>
-<section>
+<section id="hero">
+<button type="button" id="notif-btn" aria-pressed="false" aria-label="通知の設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span id="nf-label">通知をオン</span></button>
 <h1>自習室<span class="clock" id="clock"></span></h1>
 <p class="sub">今日、利用できる教室を確認</p>
 <div id="top-row"><button type="button" id="top-btn" hidden><span id="tb-label">♡ 開発者に感謝</span><span class="dot" id="ad-dot" hidden> ●</span></button></div>
@@ -191,6 +207,8 @@ main.nodata .summary,main.nodata #next-panel,main.nodata .toolbar,main.nodata #c
 </main>
 <div id="adm-backdrop" hidden></div>
 <aside id="admin-drawer" hidden aria-label="ADMINメニュー"><div class="adm-head"><strong>ADMIN</strong><button type="button" class="adm-close" id="adm-close" aria-label="閉じる">×</button></div><div id="admin-slot"></div></aside>
+<div id="nf-modal" hidden role="dialog" aria-modal="true" aria-labelledby="nf-title"><div class="nf-card"><div class="nf-title" id="nf-title"></div><p class="nf-text" id="nf-text"></p><div class="nf-row"><button type="button" id="nf-no">いいえ</button><button type="button" id="nf-yes">はい</button></div></div></div>
+<div id="nf-toast" hidden role="status"></div>
 <div id="guide-modal" hidden role="dialog" aria-modal="true" aria-labelledby="guide-title">
  <div class="guide-sheet">
   <div class="guide-head"><strong id="guide-title">Study Rooms の使い方</strong><button type="button" class="guide-close" id="guide-close" aria-label="閉じる">×</button></div>
@@ -236,6 +254,11 @@ main.nodata .summary,main.nodata #next-panel,main.nodata .toolbar,main.nodata #c
    <p class="guide-callout">表示内容は変更される場合があります。実際に利用する前に、校舎の掲示板などで最新情報を確認してください。</p>
   </section>
 
+  <section class="guide-section">
+   <div class="guide-tag">05 / NOTIFICATION</div><h3>終了前の通知（任意）</h3>
+   <p>右上の「通知をオン」を押して許可すると、本日最後の自習室が終わる3分前にお知らせします。もう一度押すとオフにできます。</p>
+   <p class="guide-callout">通知はStudy Roomsを開いている間（またはバックグラウンドで動いている間）に届きます。iPhoneではホーム画面に追加したアプリから設定してください。アプリを完全に閉じていると届かない場合があります。</p>
+  </section>
   <section class="guide-section"><h3>開発者に感謝しましょう！</h3></section>
   <section class="guide-section">
    <div class="guide-tag">ADMIN</div><h3>管理者専用機能</h3>
@@ -539,6 +562,7 @@ function tick(){
 tick();setInterval(tick,1000);
 /* アップデートログ（新しいものを上に追加していく） */
 const UPDATES=[
+ {d:"2026-11-28",t:"導入",x:"通知機能を追加しました（右上のボタンでオン／オフ。最後の自習室が終わる3分前にお知らせ）"},
  {d:"2026-11-24",t:"導入",x:"情報が更新されていないときの案内メッセージを追加しました"},
  {d:"2026-11-24",t:"導入",x:"管理者メニュー（右上の≡）と、仮JSONの試し表示（自分の画面だけ）を追加しました"},
  {d:"2026-11-24",t:"修正",x:"使い方の「ホーム画面に追加」の図を、最新のSafariの画面に合わせて作り直しました"},
@@ -594,6 +618,77 @@ async function checkVersion(){
 }
 checkVersion();setInterval(checkVersion,300000);
 setTimeout(()=>{if(document.body.classList.contains("locked")&&$("login").hidden){$("login").hidden=false;$("login-msg").textContent="サーバーに接続できません。通信状況を確認してください。"}},8000);
+</script>
+<script>
+/* ---- 終了3分前の通知（任意・ボタンでオン／オフ）---- */
+(function setupNotify(){
+ const btn=$("notif-btn"),modal=$("nf-modal"),LS="sr_notif",DONE="sr_notif_done";
+ const supported=()=>typeof Notification!=="undefined";
+ const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+ const lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+ let on=false,askMode="on",toastT=0;
+ function toast(t,ms){const e=$("nf-toast");e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{e.hidden=true},ms||4500)}
+ function registerSW(){if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{})}
+ function sync(){
+  on=lsGet(LS)==="1"&&supported()&&Notification.permission==="granted";
+  if(lsGet(LS)==="1"&&!on&&supported()&&Notification.permission==="denied")lsSet(LS,null);
+  btn.classList.toggle("on",on);btn.setAttribute("aria-pressed",String(on));
+  $("nf-label").textContent=on?"通知オン中":"通知をオン";
+ }
+ function lastEndToday(){
+  const d=activeData();if(!d||!Array.isArray(d.rooms))return null;
+  const rs=d.rooms.filter(r=>parseDate(r.date)===todayKey()).map(r=>({room:r.room,t:hm(r.time)})).filter(r=>r.t);
+  if(!rs.length)return null;
+  const end=Math.max(...rs.map(r=>r.t.end));
+  return{end,names:rs.filter(r=>r.t.end===end).map(r=>r.room)};
+ }
+ async function notify(L){
+  const title="あと3分で自習室が終わります";
+  const body=`${L.names.join("・")} が ${fmtHM(L.end)} に終了します`;
+  let shown=false;
+  try{
+   const reg=("serviceWorker" in navigator)?await navigator.serviceWorker.getRegistration():null;
+   if(reg&&reg.showNotification){await reg.showNotification(title,{body,icon:"./IMG_4943.jpeg",tag:"sr-last-room"});shown=true}
+  }catch(e){}
+  if(!shown){try{new Notification(title,{body,icon:"./IMG_4943.jpeg",tag:"sr-last-room"});shown=true}catch(e){}}
+  if(!document.hidden)toast(title+"\n"+body,8000);
+ }
+ function check(){
+  if(!on||SR.test||document.body.classList.contains("locked"))return;
+  const L=lastEndToday();if(!L)return;
+  const d=new Date(),s=d.getHours()*3600+d.getMinutes()*60+d.getSeconds();
+  if(s<L.end*60-180||s>=L.end*60)return;
+  const mark=todayKey()+"|"+L.end;
+  if(lsGet(DONE)===mark)return;
+  lsSet(DONE,mark);notify(L);
+ }
+ function openAsk(mode){
+  askMode=mode;
+  $("nf-title").textContent=mode==="on"?"通知をオンにしますか？":"通知をオフにしますか？";
+  $("nf-text").textContent=mode==="on"?"3分前に知らせるのでそれまでは慌てずに安心して勉強できます。":"最後の自習室が終わる前のお知らせが届かなくなります。";
+  modal.hidden=false;
+ }
+ const closeAsk=()=>{modal.hidden=true};
+ btn.addEventListener("click",()=>openAsk(on?"off":"on"));
+ $("nf-no").addEventListener("click",closeAsk);
+ modal.addEventListener("click",e=>{if(e.target===modal)closeAsk()});
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!modal.hidden)closeAsk()});
+ $("nf-yes").addEventListener("click",async()=>{
+  closeAsk();
+  if(askMode==="off"){lsSet(LS,null);sync();toast("通知をオフにしました");return}
+  if(!supported()){toast("この環境では通知を使えません。\niPhoneはホーム画面に追加したアプリから開いてください。",7000);return}
+  let p=Notification.permission;
+  if(p==="default"){try{p=await Notification.requestPermission()}catch(e){p="denied"}}
+  if(p!=="granted"){sync();toast("通知が許可されていません。\n端末の設定で通知を許可してください。",7000);return}
+  lsSet(LS,"1");registerSW();sync();
+  const L=lastEndToday(),n=new Date(),nowM=n.getHours()*60+n.getMinutes();
+  toast(L&&L.end-3>nowM?`通知をオンにしました。\n本日は ${fmtHM(L.end-3)} にお知らせします。`:"通知をオンにしました。\n次の自習室の日にお知らせします。");
+  check();
+ });
+ sync();if(on)registerSW();
+ setInterval(()=>{sync();check()},2000);
+ ["visibilitychange","pageshow","focus"].forEach(ev=>window.addEventListener(ev,()=>{if(ev!=="visibilitychange"||!document.hidden){sync();check()}}));
+})();
 </script>
 <script type="module">
 /* ====== 設定（SETUP.md参照）====== */
